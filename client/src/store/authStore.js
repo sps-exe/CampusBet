@@ -1,155 +1,115 @@
-/**
- * CampusArena — Auth Store (Zustand)
- *
- * STUB IMPLEMENTATION — Dev 2 will replace login/signup/loadUser
- * with real API calls. Do NOT change function signatures.
- *
- * The persist middleware automatically syncs state to localStorage
- * under the key 'campusarena-auth'. No need to touch localStorage directly.
- */
-
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import * as authApi from '../api/authApi';
+import toast from 'react-hot-toast';
+import { CURRENT_USER } from '../utils/mockData';
 
-export const useAuthStore = create(
+const USE_MOCK = true;
+
+const useAuthStore = create(
   persist(
     (set, get) => ({
-      // ─── State ───────────────────────────────────────────────────────────────
-      /** @type {null | { id: string, name: string, email: string, college: string, role: 'player'|'host'|'admin', stats: object, badges: string[], avatarUrl: string|null }} */
       user: null,
-      /** @type {null | string} */
       token: null,
       isAuthenticated: false,
       isLoading: false,
-      /** @type {null | string} */
-      error: null,
 
-      // ─── Actions ─────────────────────────────────────────────────────────────
-
-      /**
-       * Log in with email and password.
-       * STUB: Dev 2 replaces body with POST /api/auth/login
-       *
-       * @param {string} email
-       * @param {string} password
-       * @returns {Promise<{ success: boolean, error?: string }>}
-       */
       login: async (email, password) => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true });
         try {
-          // STUB: simulate network latency
-          await new Promise((r) => setTimeout(r, 800));
-
-          if (!email || !password) throw new Error('Email and password required');
-
-          // Mock user object — Dev 2 replaces with real API response
-          const mockUser = {
-            id: 'mock-user-1',
-            name: 'Demo Player',
-            email,
-            college: 'IIT Delhi',
-            role: 'player',
-            stats: {
-              tournamentsPlayed: 12,
-              tournamentsWon: 3,
-              matchesPlayed: 47,
-              matchesWon: 28,
-            },
-            badges: ['First Win', 'Tournament Finalist'],
-            avatarUrl: null,
-          };
-
-          set({
-            user: mockUser,
-            token: 'mock-jwt-' + Date.now(),
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-          });
-
+          if (USE_MOCK) {
+            await new Promise((r) => setTimeout(r, 700));
+            if (!email.includes('@') || password.length < 6) throw new Error('Invalid credentials');
+            const mockUser = { ...CURRENT_USER, email, name: email.split('@')[0], college: 'Demo University' };
+            set({ user: mockUser, token: 'mock-jwt', isAuthenticated: true });
+            toast.success(`Welcome back, ${mockUser.name}! ⚡`);
+            return { success: true };
+          }
+          const { data } = await authApi.login({ email, password });
+          localStorage.setItem('cb_token', data.token);
+          set({ user: data.user, token: data.token, isAuthenticated: true });
+          toast.success(`Welcome back, ${data.user.name.split(' ')[0]}! ⚡`);
           return { success: true };
         } catch (err) {
-          set({ error: err.message, isLoading: false, isAuthenticated: false });
-          return { success: false, error: err.message };
+          const msg = err.response?.data?.message || err.message || 'Login failed';
+          toast.error(msg);
+          return { success: false, message: msg };
+        } finally {
+          set({ isLoading: false });
         }
       },
 
-      /**
-       * Create a new account.
-       * STUB: Dev 2 replaces body with POST /api/auth/signup
-       *
-       * @param {{ name: string, email: string, college: string, password: string, role: string }} data
-       * @returns {Promise<{ success: boolean, error?: string }>}
-       */
-      signup: async (data) => {
-        set({ isLoading: true, error: null });
+      signup: async (formData) => {
+        set({ isLoading: true });
         try {
-          // STUB: simulate network latency
-          await new Promise((r) => setTimeout(r, 1000));
-
-          const mockUser = {
-            id: 'mock-user-' + Date.now(),
-            name: data.name,
-            email: data.email,
-            college: data.college,
-            role: data.role || 'player',
-            stats: {
-              tournamentsPlayed: 0,
-              tournamentsWon: 0,
-              matchesPlayed: 0,
-              matchesWon: 0,
-            },
-            badges: [],
-            avatarUrl: null,
-          };
-
-          set({
-            user: mockUser,
-            token: 'mock-jwt-' + Date.now(),
-            isAuthenticated: true,
-            isLoading: false,
-            error: null,
-          });
-
+          if (USE_MOCK) {
+            await new Promise((r) => setTimeout(r, 900));
+            const mockUser = {
+              ...CURRENT_USER,
+              _id: `u_${Date.now()}`,
+              name: formData.name,
+              email: formData.email,
+              college: formData.college,
+              credits: 500,
+            };
+            set({ user: mockUser, token: 'mock-jwt', isAuthenticated: true });
+            toast.success('Account created! You got 500 ⚡ starter credits.');
+            return { success: true };
+          }
+          const { data } = await authApi.signup(formData);
+          localStorage.setItem('cb_token', data.token);
+          set({ user: data.user, token: data.token, isAuthenticated: true });
+          toast.success('Account created! You got 500 ⚡ starter credits.');
           return { success: true };
         } catch (err) {
-          set({ error: err.message, isLoading: false });
-          return { success: false, error: err.message };
+          const msg = err.response?.data?.message || err.message || 'Signup failed';
+          toast.error(msg);
+          return { success: false, message: msg };
+        } finally {
+          set({ isLoading: false });
         }
       },
 
-      /**
-       * Log out and clear all auth state.
-       */
-      logout: () => {
-        set({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          error: null,
-          isLoading: false,
-        });
+      logout: async () => {
+        if (!USE_MOCK) {
+          try { await authApi.logout(); } catch { /* ignore */ }
+          localStorage.removeItem('cb_token');
+        }
+        set({ user: null, token: null, isAuthenticated: false });
+        toast.success('Logged out successfully.');
       },
 
-      /**
-       * Clear the current error message.
-       */
-      clearError: () => set({ error: null }),
-
-      /**
-       * Load the current user from the backend (on app mount).
-       * STUB: Dev 2 replaces with GET /api/auth/me using stored token.
-       *
-       * @returns {Promise<object|null>}
-       */
       loadUser: async () => {
-        // STUB: just return what's in state (already persisted)
-        return get().user;
+        if (USE_MOCK) return;
+        const token = localStorage.getItem('cb_token');
+        if (!token) return;
+        set({ isLoading: true });
+        try {
+          const { data } = await authApi.getMe();
+          set({ user: data, isAuthenticated: true });
+        } catch {
+          localStorage.removeItem('cb_token');
+          set({ user: null, token: null, isAuthenticated: false });
+        } finally {
+          set({ isLoading: false });
+        }
       },
+
+      updateUser: (updates) =>
+        set((state) => ({ user: { ...state.user, ...updates } })),
+
+      deductCredits: (amount) =>
+        set((state) => ({
+          user: { ...state.user, credits: (state.user?.credits || 0) - amount },
+        })),
+
+      addCredits: (amount) =>
+        set((state) => ({
+          user: { ...state.user, credits: (state.user?.credits || 0) + amount },
+        })),
     }),
     {
-      name: 'campusarena-auth',
-      // Only persist these fields — never persist isLoading or error
+      name: 'campusbet-auth',
       partialize: (state) => ({
         user: state.user,
         token: state.token,
@@ -158,3 +118,5 @@ export const useAuthStore = create(
     }
   )
 );
+
+export default useAuthStore;

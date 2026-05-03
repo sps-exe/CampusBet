@@ -1,140 +1,60 @@
-/**
- * CampusArena — Input Component
- *
- * @prop {string} label - Field label text
- * @prop {'text'|'email'|'password'|'number'|'tel'} type
- * @prop {string} value
- * @prop {Function} onChange
- * @prop {string} error - Error message to display below input
- * @prop {string} hint - Hint text below input (shown when no error)
- * @prop {React.ReactNode} icon - Lucide icon to show on the left
- * @prop {React.ReactNode} rightElement - Element on the right (e.g. toggle)
- * @prop {string} placeholder
- * @prop {string} name
- * @prop {boolean} disabled
- * @prop {boolean} required
- * @prop {string} className
- * @prop {string} success - Success message (e.g. "Detected: IIT Delhi")
- */
+import { forwardRef } from 'react';
+import { AlertCircle } from 'lucide-react';
 
-const Input = ({
+/**
+ * Input — styled form input with label and error state
+ */
+const Input = forwardRef(({
   label,
   type = 'text',
-  value,
-  onChange,
   error,
-  hint,
-  success,
   icon: Icon,
-  rightElement,
-  placeholder,
-  name,
-  id,
-  disabled = false,
-  required = false,
+  hint,
   className = '',
-  ...rest
-}) => {
-  const inputId = id || name || label?.toLowerCase().replace(/\s+/g, '-');
-
-  const inputClass = [
-    'input-base',
-    Icon ? 'pl-10' : '',
-    rightElement ? 'pr-10' : '',
-    error ? 'input-error' : '',
-    success && !error ? 'input-success' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
+  ...props
+}, ref) => {
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
-        <label
-          htmlFor={inputId}
-          style={{
-            fontSize: '13px',
-            fontWeight: 500,
-            color: 'var(--color-text-secondary)',
-            letterSpacing: '0.3px',
-          }}
-        >
+        <label className="text-sm font-medium text-text-secondary">
           {label}
-          {required && (
-            <span style={{ color: 'var(--color-error)', marginLeft: 2 }}>*</span>
-          )}
         </label>
       )}
-
-      <div style={{ position: 'relative' }}>
-        {/* Left icon */}
+      <div className="relative">
         {Icon && (
-          <span
-            style={{
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--color-text-muted)',
-              display: 'flex',
-              pointerEvents: 'none',
-            }}
-          >
-            <Icon size={16} />
-          </span>
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+            <Icon className="w-4 h-4" />
+          </div>
         )}
-
         <input
-          id={inputId}
-          name={name}
+          ref={ref}
           type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          className={inputClass}
-          {...rest}
+          className={`
+            w-full bg-bg-elevated border rounded-lg px-4 py-2.5 text-sm text-text-primary
+            placeholder:text-text-muted
+            focus:outline-none focus:ring-2 focus:border-transparent
+            transition-all duration-200
+            ${Icon ? 'pl-10' : ''}
+            ${error
+              ? 'border-error focus:ring-error/50'
+              : 'border-white/10 focus:ring-purple-500/50 hover:border-white/20'}
+          `}
+          {...props}
         />
-
-        {/* Right element (e.g. show/hide password) */}
-        {rightElement && (
-          <span
-            style={{
-              position: 'absolute',
-              right: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: 'flex',
-            }}
-          >
-            {rightElement}
-          </span>
-        )}
       </div>
-
-      {/* Success message */}
-      {success && !error && (
-        <p style={{ fontSize: '12px', color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: 4 }}>
-          ✓ {success}
-        </p>
-      )}
-
-      {/* Error message */}
       {error && (
-        <p style={{ fontSize: '12px', color: 'var(--color-error)' }}>
+        <p className="flex items-center gap-1 text-xs text-error">
+          <AlertCircle className="w-3 h-3" />
           {error}
         </p>
       )}
-
-      {/* Hint (shown when no error and no success) */}
-      {hint && !error && !success && (
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-          {hint}
-        </p>
+      {hint && !error && (
+        <p className="text-xs text-text-muted">{hint}</p>
       )}
     </div>
   );
-};
+});
+
+Input.displayName = 'Input';
 
 export default Input;

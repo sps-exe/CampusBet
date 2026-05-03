@@ -1,714 +1,238 @@
-/**
- * CampusArena — Landing Page
- * Public marketing page. Hero, stats, features, how-it-works, games, CTA.
- */
-
-import { Link } from 'react-router';
-import { motion } from 'motion/react';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Zap, Trophy, Shield, Users, ArrowRight, ChevronRight,
-  Star, CheckCircle, Swords, Crown, TrendingUp
+  Zap, Trophy, Gamepad2, BarChart2, ArrowRight,
+  Shield, Users, Star, ChevronRight,
 } from 'lucide-react';
-import { PLATFORM_STATS, SUPPORTED_GAMES } from '../utils/constants';
-import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
+import useAuth from '../hooks/useAuth';
 
-// ─── Fade-in animation variants ──────────────────────────────────────────────
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } },
-};
-
-// ─── Feature cards data ───────────────────────────────────────────────────────
-const FEATURES = [
+const features = [
   {
-    icon: <Trophy size={28} color="#8b5cf6" />,
-    title: 'Host Easily',
-    description:
-      'Create a tournament in minutes. Set your game, format, and prize. We handle brackets and results automatically.',
-    color: 'purple',
+    icon: Gamepad2,
+    title: 'Create Lobbies',
+    desc: 'Set up 1v1 or squad matches with a bid amount. Control who joins.',
+    color: 'text-purple-400',
+    bg: 'bg-purple-500/10',
+    border: 'border-purple-500/20',
   },
   {
-    icon: <Shield size={28} color="#06b6d4" />,
-    title: 'Compete Fairly',
-    description:
-      'Transparent single-elimination brackets, verified match results, and a dispute resolution system built for integrity.',
-    color: 'cyan',
+    icon: Zap,
+    title: 'Place Bids',
+    desc: 'Put your campus credits on the line. Spectators can back their favourite player too.',
+    color: 'text-cyan-400',
+    bg: 'bg-cyan-500/10',
+    border: 'border-cyan-500/20',
   },
   {
-    icon: <Star size={28} color="#f59e0b" />,
-    title: 'Win Big',
-    description:
-      'Earn trophies, collect achievement badges, and climb your campus leaderboard. Glory stays on your profile forever.',
-    color: 'warning',
+    icon: Trophy,
+    title: 'Win & Climb',
+    desc: 'Winners collect all credits. Rise through the campus leaderboard.',
+    color: 'text-warning',
+    bg: 'bg-warning/10',
+    border: 'border-warning/20',
   },
 ];
 
-// ─── How it works steps ───────────────────────────────────────────────────────
-const HOW_IT_WORKS = [
-  {
-    step: '01',
-    icon: <Users size={22} />,
-    title: 'Sign Up With College Email',
-    description:
-      'Register using your institutional email. CampusArena is 100% college-gated — your rivals are your classmates.',
-  },
-  {
-    step: '02',
-    icon: <Swords size={22} />,
-    title: 'Join or Host a Tournament',
-    description:
-      'Browse open tournaments across 9+ games, register with a click, or create your own bracket as a host.',
-  },
-  {
-    step: '03',
-    icon: <Crown size={22} />,
-    title: 'Compete and Claim Glory',
-    description:
-      'Play your match, submit the result, collect prizes, and watch your leaderboard rank rise.',
-  },
+const steps = [
+  { num: '01', title: 'Sign up with college email', desc: 'Only students at your institution can join. You get 500 ⚡ credits to start.' },
+  { num: '02', title: 'Find or create a lobby', desc: 'Browse open matches or host your own. Set the bid and the game.' },
+  { num: '03', title: 'Play & collect', desc: 'Win the match, claim the credits. Build your reputation on campus.' },
 ];
 
-// ─── Sponsor logos (placeholders) ────────────────────────────────────────────
-const SPONSOR_NAMES = ['Razer', 'HyperX', 'Corsair', 'ASUS ROG', 'MSI', 'SteelSeries'];
+const games = ['Valorant', 'Chess', 'FIFA / EA FC', 'BGMI', 'Smash Bros', 'Mario Kart', 'Carrom', 'Table Tennis'];
 
-// ─── Component ───────────────────────────────────────────────────────────────
 const Landing = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) navigate('/dashboard', { replace: true });
+  }, [isAuthenticated]);
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-background)' }}>
-      <Navbar />
-
-      {/* ══════════════════════════════════════════════
-          HERO SECTION
-         ══════════════════════════════════════════════ */}
-      <section
-        className="bg-gaming-grid noise-overlay"
-        style={{
-          minHeight: '92vh',
-          display: 'flex',
-          alignItems: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Background glows */}
-        <div className="glow-purple" style={{ top: '-100px', left: '-100px' }} />
-        <div className="glow-cyan"   style={{ bottom: '-50px', right: '-50px' }} />
-
-        <div className="container-xl" style={{ position: 'relative', zIndex: 1 }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: 48,
-              alignItems: 'center',
-              padding: '80px 0',
-            }}
-          >
-            {/* ── Left: Text ── */}
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={stagger}
-            >
-              {/* Tag pill */}
-              <motion.div variants={fadeUp} custom={0}>
-                <span
-                  className="badge badge-purple"
-                  style={{ marginBottom: 20, display: 'inline-flex' }}
-                >
-                  <Zap size={11} />
-                  Now live at 20+ campuses
-                </span>
-              </motion.div>
-
-              {/* Headline */}
-              <motion.h1
-                variants={fadeUp}
-                custom={1}
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'clamp(40px, 6vw, 72px)',
-                  fontWeight: 800,
-                  lineHeight: 1.08,
-                  marginBottom: 24,
-                  color: 'var(--color-text-primary)',
-                }}
-              >
-                Host Tournaments.{' '}
-                <span className="animated-gradient-text">Crown Champions.</span>
-              </motion.h1>
-
-              {/* Subtitle */}
-              <motion.p
-                variants={fadeUp}
-                custom={2}
-                style={{
-                  fontSize: 18,
-                  color: 'var(--color-text-secondary)',
-                  lineHeight: 1.7,
-                  maxWidth: 480,
-                  marginBottom: 36,
-                }}
-              >
-                The premier skill-based gaming tournament platform built exclusively for
-                college campuses. No real money. Pure skill. Infinite glory.
-              </motion.p>
-
-              {/* CTA buttons */}
-              <motion.div
-                variants={fadeUp}
-                custom={3}
-                style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}
-              >
-                <Link to="/signup">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    icon={<Zap size={18} />}
-                  >
-                    Get Started — It's Free
-                  </Button>
-                </Link>
-                <a href="#how-it-works">
-                  <Button variant="outline" size="lg">
-                    See How It Works
-                  </Button>
-                </a>
-              </motion.div>
-
-              {/* Trust indicators */}
-              <motion.div
-                variants={fadeUp}
-                custom={4}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 20,
-                  marginTop: 32,
-                  flexWrap: 'wrap',
-                }}
-              >
-                {['No real money', 'College-exclusive', '100% free to join'].map((text) => (
-                  <span
-                    key={text}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontSize: 13,
-                      color: 'var(--color-text-muted)',
-                    }}
-                  >
-                    <CheckCircle size={13} color="var(--color-success)" />
-                    {text}
-                  </span>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            {/* ── Right: Hero Image ── */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}
-            >
-              {/* Glow behind image */}
-              <div
-                style={{
-                  position: 'absolute',
-                  width: '70%',
-                  height: '70%',
-                  background: 'radial-gradient(circle, rgba(139,92,246,0.4), transparent 70%)',
-                  filter: 'blur(60px)',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-              <img
-                src="/images/hero.png"
-                alt="CampusArena tournament platform"
-                style={{
-                  width: '100%',
-                  maxWidth: 520,
-                  borderRadius: 20,
-                  position: 'relative',
-                  filter: 'drop-shadow(0 0 30px rgba(139,92,246,0.3))',
-                }}
-                onError={(e) => {
-                  // Fallback if image doesn't load
-                  e.target.style.display = 'none';
-                }}
-              />
-
-              {/* Floating stat cards */}
-              <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                style={{
-                  position: 'absolute',
-                  bottom: 20,
-                  left: -20,
-                  background: 'var(--color-surface)',
-                  border: '1px solid rgba(139,92,246,0.3)',
-                  borderRadius: 12,
-                  padding: '12px 16px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                }}
-              >
-                <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 2 }}>Active Now</p>
-                <p style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                  <span className="text-gradient">47</span> matches
-                </p>
-              </motion.div>
-
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                style={{
-                  position: 'absolute',
-                  top: 20,
-                  right: -10,
-                  background: 'var(--color-surface)',
-                  border: '1px solid rgba(6,182,212,0.3)',
-                  borderRadius: 12,
-                  padding: '12px 16px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                }}
-              >
-                <p style={{ fontSize: 11, color: 'var(--color-text-muted)', marginBottom: 2 }}>Top Player</p>
-                <p style={{ fontSize: 14, fontWeight: 700 }}>🏆 Aryan D.</p>
-                <p style={{ fontSize: 11, color: 'var(--color-success)' }}>12W / 1L</p>
-              </motion.div>
-            </motion.div>
+    <div className="bg-grid min-h-screen text-text-primary">
+      {/* ── Navbar ── */}
+      <header className="fixed top-0 inset-x-0 z-40 border-b border-white/5 bg-bg-primary/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-display font-bold text-xl">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="gradient-text">CampusBet</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Log in</Link>
+            <Link to="/signup" className="px-4 py-2 rounded-lg bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold transition-all shadow-glow-purple-sm hover:shadow-glow-purple">
+              Get Started
+            </Link>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* ══════════════════════════════════════════════
-          STATS BAR
-         ══════════════════════════════════════════════ */}
-      <section
-        style={{
-          background: 'var(--color-surface)',
-          borderTop: '1px solid var(--color-border)',
-          borderBottom: '1px solid var(--color-border)',
-          padding: '32px 0',
-        }}
-      >
-        <div className="container-xl">
+      {/* ── Hero ── */}
+      <section className="relative pt-36 pb-24 px-6 overflow-hidden">
+        {/* Glow blobs */}
+        <div className="absolute top-20 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-32 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
           <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            variants={stagger}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-              gap: 24,
-            }}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
-            {PLATFORM_STATS.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                variants={fadeUp}
-                custom={i}
-                style={{ textAlign: 'center' }}
-              >
-                <p style={{ fontSize: 32, marginBottom: 4 }}>{stat.icon}</p>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-heading)',
-                    fontSize: 28,
-                    fontWeight: 800,
-                    marginBottom: 4,
-                  }}
-                  className="text-gradient"
-                >
-                  {stat.value}
-                </p>
-                <p style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>
-                  {stat.label}
-                </p>
-              </motion.div>
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 text-sm font-medium mb-6">
+              <span className="status-live" /> College-exclusive · Campus credits only
+            </span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="font-display text-5xl sm:text-6xl md:text-7xl font-bold leading-tight mb-6"
+          >
+            Put Your{' '}
+            <span className="gradient-text text-glow-purple">Skills</span>
+            <br />
+            On The Line
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-text-secondary text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+          >
+            CampusBet is a college-exclusive skill-based gaming platform.
+            Challenge peers, place campus credit bids, and prove you're the best on campus.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+          >
+            <Link
+              to="/signup"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-purple-500 hover:bg-purple-600 text-white text-base font-bold transition-all shadow-glow-purple hover:shadow-glow-purple active:scale-95"
+            >
+              Start Competing <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-white/10 hover:border-white/20 text-text-primary text-base font-semibold transition-all hover:bg-white/5"
+            >
+              Log in
+            </Link>
+          </motion.div>
+
+          {/* Games ticker */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-14 flex flex-wrap justify-center gap-2"
+          >
+            {games.map((g) => (
+              <span key={g} className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-text-muted text-xs">{g}</span>
             ))}
           </motion.div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
-          FEATURES
-         ══════════════════════════════════════════════ */}
-      <section className="section-padding">
-        <div className="container-xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            variants={stagger}
-          >
-            {/* Section header */}
-            <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-              <span className="badge badge-purple" style={{ marginBottom: 16, display: 'inline-flex' }}>
-                Why CampusArena
-              </span>
-              <h2
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'clamp(28px, 4vw, 44px)',
-                  fontWeight: 800,
-                  marginBottom: 16,
-                }}
+      {/* ── Features ── */}
+      <section className="py-20 px-6">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-display text-3xl font-bold text-center mb-3">Why CampusBet?</h2>
+          <p className="text-text-muted text-center mb-12 max-w-xl mx-auto">Built for campus gaming culture. No real money — just pure skill on the line.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {features.map((f, i) => (
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`bg-bg-card border ${f.border} rounded-2xl p-6 flex flex-col gap-4`}
               >
-                Everything your campus{' '}
-                <span className="text-gradient">gaming scene needs</span>
-              </h2>
-              <p style={{ fontSize: 16, color: 'var(--color-text-secondary)', maxWidth: 520, margin: '0 auto' }}>
-                We built the platform we always wished existed — structured, fair, and built specifically for college communities.
-              </p>
-            </motion.div>
-
-            {/* Feature cards */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: 24,
-              }}
-            >
-              {FEATURES.map((f, i) => (
-                <motion.div key={f.title} variants={fadeUp} custom={i}>
-                  <Card
-                    hover
-                    style={{ padding: 32, height: '100%' }}
-                  >
-                    <div
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: 12,
-                        background: f.color === 'purple'
-                          ? 'rgba(139,92,246,0.12)'
-                          : f.color === 'cyan'
-                          ? 'rgba(6,182,212,0.1)'
-                          : 'rgba(245,158,11,0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: 20,
-                        border: `1px solid ${
-                          f.color === 'purple'
-                            ? 'rgba(139,92,246,0.2)'
-                            : f.color === 'cyan'
-                            ? 'rgba(6,182,212,0.2)'
-                            : 'rgba(245,158,11,0.2)'
-                        }`,
-                      }}
-                    >
-                      {f.icon}
-                    </div>
-                    <h3
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: 20,
-                        fontWeight: 700,
-                        marginBottom: 12,
-                      }}
-                    >
-                      {f.title}
-                    </h3>
-                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
-                      {f.description}
-                    </p>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                <div className={`w-12 h-12 rounded-xl ${f.bg} flex items-center justify-center`}>
+                  <f.icon className={`w-6 h-6 ${f.color}`} />
+                </div>
+                <h3 className="font-display text-lg font-semibold">{f.title}</h3>
+                <p className="text-text-muted text-sm leading-relaxed">{f.desc}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
-          HOW IT WORKS
-         ══════════════════════════════════════════════ */}
-      <section
-        id="how-it-works"
-        className="section-padding"
-        style={{ background: 'var(--color-surface)', scrollMarginTop: '80px' }}
-      >
-        <div className="container-xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            variants={stagger}
-          >
-            <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 56 }}>
-              <span className="badge badge-cyan" style={{ marginBottom: 16, display: 'inline-flex' }}>
-                How It Works
-              </span>
-              <h2
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'clamp(28px, 4vw, 44px)',
-                  fontWeight: 800,
-                  marginBottom: 16,
-                }}
+      {/* ── How it works ── */}
+      <section className="py-20 px-6 bg-bg-secondary/50">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="font-display text-3xl font-bold text-center mb-12">How It Works</h2>
+          <div className="space-y-6">
+            {steps.map((step, i) => (
+              <motion.div
+                key={step.num}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="flex gap-5 items-start"
               >
-                From signup to{' '}
-                <span className="text-gradient">campus champion</span>
-              </h2>
-            </motion.div>
-
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: 32,
-              }}
-            >
-              {HOW_IT_WORKS.map((step, i) => (
-                <motion.div
-                  key={step.step}
-                  variants={fadeUp}
-                  custom={i}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}
-                >
-                  {/* Step number */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <span
-                      style={{
-                        fontFamily: 'var(--font-heading)',
-                        fontSize: 48,
-                        fontWeight: 800,
-                        lineHeight: 1,
-                        opacity: 0.15,
-                        color: 'var(--color-primary)',
-                        userSelect: 'none',
-                      }}
-                    >
-                      {step.step}
-                    </span>
-                    <div
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 10,
-                        background: 'rgba(139,92,246,0.12)',
-                        border: '1px solid rgba(139,92,246,0.25)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--color-primary)',
-                      }}
-                    >
-                      {step.icon}
-                    </div>
-                  </div>
-                  <h3
-                    style={{
-                      fontFamily: 'var(--font-heading)',
-                      fontSize: 18,
-                      fontWeight: 700,
-                    }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
-                    {step.description}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+                <span className="font-display text-4xl font-black gradient-text leading-none flex-shrink-0">{step.num}</span>
+                <div>
+                  <h3 className="font-display font-semibold text-lg mb-1">{step.title}</h3>
+                  <p className="text-text-muted text-sm leading-relaxed">{step.desc}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
-          SUPPORTED GAMES
-         ══════════════════════════════════════════════ */}
-      <section className="section-padding">
-        <div className="container-xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            variants={stagger}
-          >
-            <motion.div variants={fadeUp} style={{ textAlign: 'center', marginBottom: 48 }}>
-              <h2
-                style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'clamp(24px, 3.5vw, 36px)',
-                  fontWeight: 800,
-                  marginBottom: 12,
-                }}
-              >
-                9 games and counting
-              </h2>
-              <p style={{ fontSize: 15, color: 'var(--color-text-secondary)' }}>
-                More games added based on campus demand
-              </p>
-            </motion.div>
-
-            <motion.div
-              variants={stagger}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                gap: 16,
-              }}
-            >
-              {SUPPORTED_GAMES.map((game, i) => (
-                <motion.div
-                  key={game.id}
-                  variants={fadeUp}
-                  custom={i}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <Card
-                    hover
-                    style={{
-                      padding: '20px 12px',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <p style={{ fontSize: 28, marginBottom: 8 }}>{game.icon}</p>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', lineHeight: 1.3 }}>
-                      {game.name}
-                    </p>
-                  </Card>
-                </motion.div>
-              ))}
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════
-          SPONSORS PLACEHOLDER
-         ══════════════════════════════════════════════ */}
-      <section
-        style={{
-          background: 'var(--color-surface)',
-          borderTop: '1px solid var(--color-border)',
-          padding: '48px 0',
-        }}
-        id="sponsors"
-      >
-        <div className="container-xl">
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: 12,
-              color: 'var(--color-text-muted)',
-              letterSpacing: '2px',
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              marginBottom: 32,
-            }}
-          >
-            Tournament Sponsors
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: 32,
-              alignItems: 'center',
-            }}
-          >
-            {SPONSOR_NAMES.map((name) => (
-              <div
-                key={name}
-                style={{
-                  padding: '10px 24px',
-                  background: 'var(--color-surface-2)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: 'var(--color-text-muted)',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                {name}
+      {/* ── Trust badges ── */}
+      <section className="py-16 px-6">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+          {[
+            { icon: Shield, label: 'Zero real money', desc: 'Campus credits only. Fully legal.' },
+            { icon: Users, label: 'College-gated', desc: 'Only your campus peers. Safe & trusted.' },
+            { icon: Star, label: 'Skill-based', desc: 'You play. You win. No luck involved.' },
+          ].map(({ icon: Icon, label, desc }) => (
+            <div key={label} className="flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Icon className="w-5 h-5 text-purple-400" />
               </div>
-            ))}
+              <p className="font-semibold text-text-primary text-sm">{label}</p>
+              <p className="text-text-muted text-xs">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="py-20 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="bg-bg-card border border-purple-500/20 rounded-2xl p-10">
+            <h2 className="font-display text-3xl font-bold mb-4">Ready to dominate?</h2>
+            <p className="text-text-muted mb-8">Sign up with your college email and get 500 ⚡ credits instantly.</p>
+            <Link
+              to="/signup"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold transition-all hover:opacity-90 active:scale-95 shadow-glow-purple"
+            >
+              Create Free Account <ChevronRight className="w-5 h-5" />
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════
-          CTA SECTION
-         ══════════════════════════════════════════════ */}
-      <section className="section-padding bg-gaming-grid" style={{ position: 'relative', overflow: 'hidden' }}>
-        <div className="glow-purple" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
-        <div className="container-md" style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={stagger}
-          >
-            <motion.div variants={fadeUp}>
-              <TrendingUp size={48} color="var(--color-primary)" style={{ margin: '0 auto 24px' }} />
-            </motion.div>
-            <motion.h2
-              variants={fadeUp}
-              custom={1}
-              style={{
-                fontFamily: 'var(--font-heading)',
-                fontSize: 'clamp(28px, 4vw, 48px)',
-                fontWeight: 800,
-                marginBottom: 20,
-              }}
-            >
-              Ready to dominate{' '}
-              <span className="animated-gradient-text">your campus?</span>
-            </motion.h2>
-            <motion.p
-              variants={fadeUp}
-              custom={2}
-              style={{ fontSize: 17, color: 'var(--color-text-secondary)', marginBottom: 36 }}
-            >
-              Join 500+ players already competing. Sign up in 60 seconds.
-            </motion.p>
-            <motion.div
-              variants={fadeUp}
-              custom={3}
-              style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}
-            >
-              <Link to="/signup">
-                <Button variant="primary" size="lg" icon={<Zap size={18} />}>
-                  Create Free Account
-                </Button>
-              </Link>
-              <Link to="/tournaments">
-                <Button variant="outline" size="lg" icon={<ArrowRight size={18} />}>
-                  Browse Tournaments
-                </Button>
-              </Link>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      <Footer />
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/5 py-8 px-6 text-center text-text-muted text-sm">
+        <p>© 2025 CampusBet · College-exclusive · No real money involved · Built for capstone</p>
+      </footer>
     </div>
   );
 };

@@ -1,46 +1,40 @@
-/**
- * CampusArena — useAuth Hook
- * A clean wrapper around the Zustand auth store.
- * Always use this hook instead of accessing the store directly.
- */
-
-import { useAuthStore } from '../store/authStore';
+import useAuthStore from '../store/authStore';
 
 /**
- * @returns {{
- *   user: object | null,
- *   token: string | null,
- *   isAuthenticated: boolean,
- *   isLoading: boolean,
- *   error: string | null,
- *   isHost: boolean,
- *   isAdmin: boolean,
- *   login: Function,
- *   signup: Function,
- *   logout: Function,
- *   clearError: Function,
- *   loadUser: Function,
- * }}
+ * useAuth — convenient hook to access auth state + actions
+ * Always use this instead of accessing the store directly.
  */
-export const useAuth = () => {
-  const store = useAuthStore();
+const useAuth = () => {
+  const user = useAuthStore((s) => s.user);
+  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const login = useAuthStore((s) => s.login);
+  const signup = useAuthStore((s) => s.signup);
+  const logout = useAuthStore((s) => s.logout);
+  const loadUser = useAuthStore((s) => s.loadUser);
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const deductCredits = useAuthStore((s) => s.deductCredits);
+  const addCredits = useAuthStore((s) => s.addCredits);
+
+  const isHost = user?.role === 'host' || user?.role === 'admin';
+  const isAdmin = user?.role === 'admin';
 
   return {
-    user:            store.user,
-    token:           store.token,
-    isAuthenticated: store.isAuthenticated,
-    isLoading:       store.isLoading,
-    error:           store.error,
-
-    // Derived role helpers
-    isHost:  store.user?.role === 'host'  || store.user?.role === 'admin',
-    isAdmin: store.user?.role === 'admin',
-
-    // Actions
-    login:      store.login,
-    signup:     store.signup,
-    logout:     store.logout,
-    clearError: store.clearError,
-    loadUser:   store.loadUser,
+    user,
+    token,
+    isAuthenticated,
+    isLoading,
+    isHost,
+    isAdmin,
+    login,
+    signup,
+    logout,
+    loadUser,
+    updateUser,
+    deductCredits,
+    addCredits,
   };
 };
+
+export default useAuth;

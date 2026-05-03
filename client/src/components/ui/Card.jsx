@@ -1,38 +1,42 @@
-/**
- * CampusArena — Card Component
- *
- * @prop {boolean} hover - Enable purple glow on hover
- * @prop {boolean} gradient - Show gradient border (purple→cyan)
- * @prop {boolean} glass - Glassmorphism style
- * @prop {string} className - Additional classes
- * @prop {React.ReactNode} children
- */
+import { motion } from 'framer-motion';
 
+/**
+ * Card — glass-style container component
+ * @param {boolean} hover - Enable hover glow animation
+ * @param {boolean} gradient - Add subtle gradient overlay
+ * @param {'purple'|'cyan'|'none'} glowColor - Border glow color
+ */
 const Card = ({
+  children,
   hover = false,
   gradient = false,
-  glass = false,
+  glowColor = 'none',
   className = '',
-  children,
   onClick,
-  ...rest
 }) => {
-  const baseClass = glass
-    ? 'card-glass'
-    : gradient
-    ? 'card-gradient-border'
-    : 'card-base';
-
-  const hoverClass = hover ? 'card-hover cursor-pointer' : '';
+  const glowClasses = {
+    purple: 'border-glow-purple',
+    cyan: 'border-glow-cyan',
+    none: 'border border-white/5',
+  };
 
   return (
-    <div
-      className={`${baseClass} ${hoverClass} ${className}`}
+    <motion.div
       onClick={onClick}
-      {...rest}
+      whileHover={hover ? { y: -2, scale: 1.005 } : {}}
+      transition={{ duration: 0.2 }}
+      className={`
+        relative bg-bg-card rounded-xl overflow-hidden
+        ${glowClasses[glowColor]}
+        ${hover ? 'cursor-pointer' : ''}
+        ${gradient
+          ? 'before:absolute before:inset-0 before:bg-gradient-to-br before:from-purple-500/5 before:to-cyan-500/5 before:pointer-events-none'
+          : ''}
+        ${className}
+      `}
     >
       {children}
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,91 +1,67 @@
-/**
- * CampusArena — App-wide Constants
- */
+export const APP_NAME = 'CampusBet';
 
-// ─── Supported Games ──────────────────────────────────────────────────────────
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export const SUPPORTED_GAMES = [
-  { id: 'valorant',    name: 'Valorant',         icon: '🎯', banner: '/images/game-valorant.png',    category: 'fps' },
-  { id: 'bgmi',        name: 'BGMI',              icon: '🪂', banner: '/images/game-bgmi.png',        category: 'battle-royale' },
-  { id: 'fifa',        name: 'FIFA / EA FC',      icon: '⚽', banner: '/images/game-fifa.png',        category: 'sports' },
-  { id: 'chess',       name: 'Chess',             icon: '♟️', banner: '/images/game-chess.png',       category: 'strategy' },
-  { id: 'smash',       name: 'Super Smash Bros',  icon: '👊', banner: '/images/game-fighting.png',    category: 'fighting' },
-  { id: 'mario-kart',  name: 'Mario Kart',        icon: '🏎️', banner: '/images/game-racing.png',     category: 'racing' },
-  { id: 'carrom',      name: 'Carrom',            icon: '🎱', banner: '/images/game-carrom.png',      category: 'board' },
-  { id: 'tt',          name: 'Table Tennis',      icon: '🏓', banner: '/images/game-tt.png',          category: 'sports' },
-  { id: 'custom',      name: 'Custom Game',       icon: '🎮', banner: '/images/game-custom.png',      category: 'custom' },
+export const COLLEGE_EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(edu|ac\.in|edu\.in)$/;
+export const COLLEGE_EMAIL_HINT = 'Must be a college-issued email (e.g. .edu or .ac.in)';
+
+export const GAMES = [
+  'Super Smash Bros',
+  'Mario Kart',
+  'FIFA / EA FC',
+  'Chess',
+  'Valorant',
+  'BGMI / PUBG Mobile',
+  'Carrom',
+  'Table Tennis',
+  'Custom',
 ];
 
-// ─── Tournament Formats ───────────────────────────────────────────────────────
+export const GAME_ICONS = {
+  'Valorant': '🎯',
+  'Chess': '♟️',
+  'FIFA / EA FC': '⚽',
+  'BGMI / PUBG Mobile': '🔫',
+  'Super Smash Bros': '💥',
+  'Mario Kart': '🏎️',
+  'Carrom': '🎱',
+  'Table Tennis': '🏓',
+  'Custom': '🎮',
+};
+
+export const LOBBY_FORMATS = [
+  { value: '1v1', label: '1v1 (2 Players)' },
+  { value: '2v2', label: '2v2 (4 Players)' },
+  { value: 'squad', label: 'Squad (4 Players)' },
+  { value: 'ffa', label: 'Free For All' },
+];
 
 export const TOURNAMENT_FORMATS = [
-  { id: 'single-elim',  label: 'Single Elimination',  description: 'Lose once, you\'re out' },
-  { id: 'double-elim',  label: 'Double Elimination',  description: 'Two losses before elimination' },
-  { id: 'round-robin',  label: 'Round Robin',          description: 'Everyone plays everyone' },
+  { value: 'single-elim', label: 'Single Elimination' },
+  { value: 'double-elim', label: 'Double Elimination' },
+  { value: 'round-robin', label: 'Round Robin' },
 ];
 
-// ─── Tournament Statuses ──────────────────────────────────────────────────────
+export const STARTER_CREDITS = 500;
 
-export const TOURNAMENT_STATUS = {
-  UPCOMING:  'upcoming',
-  LIVE:      'live',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
-};
-
-export const STATUS_LABELS = {
-  upcoming:  'Upcoming',
-  live:      'Live',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-};
-
-export const STATUS_BADGE_VARIANT = {
-  upcoming:  'purple',
-  live:      'cyan',
-  completed: 'success',
-  cancelled: 'error',
-};
-
-// ─── User Roles ───────────────────────────────────────────────────────────────
-
-export const USER_ROLES = {
-  PLAYER: 'player',
-  HOST:   'host',
-  ADMIN:  'admin',
-};
-
-// ─── Navigation Links ─────────────────────────────────────────────────────────
-
-export const NAV_LINKS = [
-  { label: 'Tournaments', path: '/tournaments', protected: true },
-  { label: 'Leaderboard', path: '/leaderboard',  protected: true },
-  { label: 'Dashboard',   path: '/dashboard',    protected: true },
+export const LEADERBOARD_PERIODS = [
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+  { value: 'all', label: 'All Time' },
 ];
 
-// ─── Password Requirements ────────────────────────────────────────────────────
-
-export const PASSWORD_REQUIREMENTS = [
-  { label: 'At least 8 characters',    test: (p) => p.length >= 8 },
-  { label: 'One uppercase letter',      test: (p) => /[A-Z]/.test(p) },
-  { label: 'One number',               test: (p) => /\d/.test(p) },
-  { label: 'One special character',     test: (p) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(p) },
-];
-
-// ─── College Email Regex ──────────────────────────────────────────────────────
-
-export const COLLEGE_EMAIL_REGEX =
-  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(edu|ac\.in|edu\.in|ac\.uk|edu\.au|ac\.nz)$/i;
-
-// ─── API Config ───────────────────────────────────────────────────────────────
-
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// ─── Mock / Fallback Stats (Landing Page) ────────────────────────────────────
-
-export const PLATFORM_STATS = [
-  { label: 'Active Players',  value: '500+',  icon: '🎮' },
-  { label: 'Tournaments',     value: '100+',  icon: '🏆' },
-  { label: 'Colleges',        value: '20+',   icon: '🎓' },
-  { label: 'Prize Sponsors',  value: '15+',   icon: '🤝' },
-];
+export const ROUTES = {
+  HOME: '/',
+  LOGIN: '/login',
+  SIGNUP: '/signup',
+  DASHBOARD: '/dashboard',
+  LOBBIES: '/lobbies',
+  LOBBY_DETAIL: '/lobbies/:id',
+  CREATE_LOBBY: '/lobbies/create',
+  TOURNAMENTS: '/tournaments',
+  TOURNAMENT_DETAIL: '/tournaments/:id',
+  CREATE_TOURNAMENT: '/tournaments/create',
+  LEADERBOARD: '/leaderboard',
+  PROFILE: '/profile',
+  WALLET: '/wallet',
+};

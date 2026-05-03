@@ -1,26 +1,22 @@
+import { Navigate, useLocation } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
+import { PageLoader } from '../ui/Skeleton';
+
 /**
- * CampusArena — ProtectedRoute
- * Redirects unauthenticated users to /login.
- * Optionally checks for required role (e.g. host-only routes).
- *
- * @prop {React.ReactNode} children
- * @prop {'player'|'host'|'admin'} requiredRole - If set, user must have this role (or admin)
+ * ProtectedRoute — redirects unauthenticated users to /login
+ * Passes the attempted URL as state so login can redirect back.
  */
-
-import { Navigate, useLocation } from 'react-router';
-import { useAuth } from '../../hooks/useAuth';
-
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, user } = useAuth();
+const ProtectedRoute = ({ children, requireHost = false }) => {
+  const { isAuthenticated, isLoading, isHost } = useAuth();
   const location = useLocation();
 
-  // Not logged in → redirect to /login, preserve intended destination
+  if (isLoading) return <PageLoader />;
+
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Role check (admin always passes)
-  if (requiredRole && user?.role !== requiredRole && user?.role !== 'admin') {
+  if (requireHost && !isHost) {
     return <Navigate to="/dashboard" replace />;
   }
 
