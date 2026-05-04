@@ -12,7 +12,7 @@ import ActivityFeed from '../components/dashboard/ActivityFeed';
 import LobbyCard from '../components/lobby/LobbyCard';
 import { CardSkeleton, StatSkeleton } from '../components/ui/Skeleton';
 import { formatCredits, calcWinRate } from '../utils/formatters';
-import { MOCK_MY_MATCHES, MOCK_LOBBIES } from '../utils/mockData';
+import { MOCK_MY_MATCHES } from '../utils/mockData';
 
 const Dashboard = () => {
   const { user } = useAuth();

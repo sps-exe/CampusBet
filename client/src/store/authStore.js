@@ -1,39 +1,53 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import * as authApi from '../api/authApi';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { CURRENT_USER } from '../utils/mockData';
 
-const USE_MOCK = true;
+const mapProfile = (dbProfile) => {
+  if (!dbProfile) return null;
+  return {
+    _id: dbProfile.id,
+    name: dbProfile.name,
+    email: dbProfile.email,
+    college: dbProfile.college,
+    credits: dbProfile.credits,
+    stats: {
+      matchesPlayed: dbProfile.matches_played || 0,
+      matchesWon: dbProfile.matches_won || 0,
+      tournamentsPlayed: dbProfile.tournaments_played || 0,
+      tournamentsWon: dbProfile.tournaments_won || 0,
+    },
+    role: dbProfile.role,
+    avatarUrl: dbProfile.avatar_url,
+    createdAt: dbProfile.created_at
+  };
+};
 
 const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
+      session: null,
       isAuthenticated: false,
       isLoading: false,
 
       login: async (email, password) => {
         set({ isLoading: true });
         try {
-          if (USE_MOCK) {
-            await new Promise((r) => setTimeout(r, 700));
-            if (!email.includes('@') || password.length < 6) throw new Error('Invalid credentials');
-            const mockUser = { ...CURRENT_USER, email, name: email.split('@')[0], college: 'Demo University' };
-            set({ user: mockUser, token: 'mock-jwt', isAuthenticated: true });
-            toast.success(`Welcome back, ${mockUser.name}! ⚡`);
-            return { success: true };
-          }
-          const { data } = await authApi.login({ email, password });
-          localStorage.setItem('cb_token', data.token);
-          set({ user: data.user, token: data.token, isAuthenticated: true });
-          toast.success(`Welcome back, ${data.user.name.split(' ')[0]}! ⚡`);
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles').select('*').eq('id', data.user.id).single();
+          if (profileError) throw profileError;
+
+          const mappedUser = mapProfile(profile);
+          set({ user: mappedUser, session: data.session, isAuthenticated: true });
+          toast.success(`Welcome back, ${mappedUser.name.split(' ')[0]}! ⚡`);
           return { success: true };
         } catch (err) {
-          const msg = err.response?.data?.message || err.message || 'Login failed';
-          toast.error(msg);
-          return { success: false, message: msg };
+          toast.error(err.message || 'Login failed');
+          return { success: false, message: err.message };
         } finally {
           set({ isLoading: false });
         }
@@ -42,79 +56,71 @@ const useAuthStore = create(
       signup: async (formData) => {
         set({ isLoading: true });
         try {
-          if (USE_MOCK) {
-            await new Promise((r) => setTimeout(r, 900));
-            const mockUser = {
-              ...CURRENT_USER,
-              _id: `u_${Date.now()}`,
-              name: formData.name,
-              email: formData.email,
-              college: formData.college,
-              credits: 500,
-            };
-            set({ user: mockUser, token: 'mock-jwt', isAuthenticated: true });
-            toast.success('Account created! You got 500 ⚡ starter credits.');
-            return { success: true };
+          const { data, error } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: { data: { name: formData.name, college: formData.college } }
+          });
+          if (error) throw error;
+
+          await new Promise(r => setTimeout(r, 500)); // wait for trigger
+          
+          let profile = null;
+          if (data.user) {
+            const { data: fetchedProfile } = await supabase
+              .from('profiles').select('*').eq('id', data.user.id).single();
+            profile = mapProfile(fetchedProfile);
           }
-          const { data } = await authApi.signup(formData);
-          localStorage.setItem('cb_token', data.token);
-          set({ user: data.user, token: data.token, isAuthenticated: true });
-          toast.success('Account created! You got 500 ⚡ starter credits.');
+
+          if (data.session) {
+             set({ user: profile, session: data.session, isAuthenticated: true });
+             toast.success('Account created! You got 500 ⚡ starter credits.');
+          } else {
+             toast.success('Registration successful! Please check your email to verify.');
+          }
           return { success: true };
         } catch (err) {
-          const msg = err.response?.data?.message || err.message || 'Signup failed';
-          toast.error(msg);
-          return { success: false, message: msg };
+          toast.error(err.message || 'Signup failed');
+          return { success: false, message: err.message };
         } finally {
           set({ isLoading: false });
         }
       },
 
       logout: async () => {
-        if (!USE_MOCK) {
-          try { await authApi.logout(); } catch { /* ignore */ }
-          localStorage.removeItem('cb_token');
-        }
-        set({ user: null, token: null, isAuthenticated: false });
+        try { await supabase.auth.signOut(); } catch (err) { console.error(err); }
+        set({ user: null, session: null, isAuthenticated: false });
         toast.success('Logged out successfully.');
       },
 
       loadUser: async () => {
-        if (USE_MOCK) return;
-        const token = localStorage.getItem('cb_token');
-        if (!token) return;
         set({ isLoading: true });
         try {
-          const { data } = await authApi.getMe();
-          set({ user: data, isAuthenticated: true });
-        } catch {
-          localStorage.removeItem('cb_token');
-          set({ user: null, token: null, isAuthenticated: false });
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError || !session) {
+            set({ user: null, session: null, isAuthenticated: false });
+            return;
+          }
+
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles').select('*').eq('id', session.user.id).single();
+          if (profileError) throw profileError;
+
+          set({ user: mapProfile(profile), session: session, isAuthenticated: true });
+        } catch (err) {
+          set({ user: null, session: null, isAuthenticated: false });
         } finally {
           set({ isLoading: false });
         }
       },
 
-      updateUser: (updates) =>
-        set((state) => ({ user: { ...state.user, ...updates } })),
-
-      deductCredits: (amount) =>
-        set((state) => ({
-          user: { ...state.user, credits: (state.user?.credits || 0) - amount },
-        })),
-
-      addCredits: (amount) =>
-        set((state) => ({
-          user: { ...state.user, credits: (state.user?.credits || 0) + amount },
-        })),
+      updateUser: (updates) => set((state) => ({ user: { ...state.user, ...updates } })),
+      deductCredits: (amount) => set((state) => ({ user: { ...state.user, credits: (state.user?.credits || 0) - amount } })),
+      addCredits: (amount) => set((state) => ({ user: { ...state.user, credits: (state.user?.credits || 0) + amount } })),
     }),
     {
       name: 'campusbet-auth',
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        isAuthenticated: state.isAuthenticated,
-      }),
+      partialize: (state) => ({ user: state.user, session: state.session, isAuthenticated: state.isAuthenticated }),
     }
   )
 );

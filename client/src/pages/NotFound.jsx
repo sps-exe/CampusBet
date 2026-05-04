@@ -2,8 +2,8 @@
  * CampusArena — 404 Not Found Page
  */
 
-import { Link } from 'react-router';
-import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Home, ArrowLeft } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Navbar from '../components/layout/Navbar';
@@ -94,12 +94,12 @@ const NotFound = () => {
           {/* Actions */}
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/">
-              <Button variant="primary" size="lg" icon={<Home size={18} />}>
+              <Button variant="primary" size="lg" icon={Home}>
                 Back to Home
               </Button>
             </Link>
             <button onClick={() => window.history.back()}>
-              <Button variant="outline" size="lg" icon={<ArrowLeft size={18} />}>
+              <Button variant="outline" size="lg" icon={ArrowLeft}>
                 Go Back
               </Button>
             </button>

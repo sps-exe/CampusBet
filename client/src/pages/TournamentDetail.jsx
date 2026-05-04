@@ -11,7 +11,6 @@ import ParticipantList from '../components/tournament/ParticipantList';
 import { PageLoader } from '../components/ui/Skeleton';
 import { formatCredits, getTournamentStatus, formatDateTime } from '../utils/formatters';
 import { GAME_ICONS } from '../utils/constants';
-import { MOCK_USERS } from '../utils/mockData';
 
 const TABS = ['Overview', 'Bracket', 'Participants'];
 
@@ -44,14 +43,11 @@ const TournamentDetail = () => {
 
   const handleRegister = async () => {
     setRegistering(true);
-    await registerForTournament(id, user._id);
+    await registerForTournament(id);
     setRegistering(false);
   };
 
-  // Resolve participant user objects from mock data
-  const resolvedParticipants = tournament.participants?.map(pid =>
-    MOCK_USERS.find(u => u._id === pid) || { _id: pid, name: `Player ${pid}`, college: tournament.college }
-  ) || [];
+  const resolvedParticipants = tournament.resolvedParticipants || [];
 
   return (
     <div className="min-h-screen bg-grid pt-24 pb-12 px-4 sm:px-6">

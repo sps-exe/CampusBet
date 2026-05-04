@@ -1,124 +1,170 @@
 import { create } from 'zustand';
-import * as lobbyApi from '../api/lobbyApi';
-import { MOCK_LOBBIES } from '../utils/mockData';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-const USE_MOCK = true; // flip to false when backend is ready
+const mapLobby = (dbLobby) => {
+  if (!dbLobby) return null;
+  return {
+    _id: dbLobby.id,
+    title: dbLobby.title,
+    game: dbLobby.game,
+    hostId: dbLobby.host_id,
+    hostName: dbLobby.host?.name || 'Unknown Host',
+    college: dbLobby.host?.college || 'Unknown College',
+    bidAmount: dbLobby.bid_amount,
+    maxPlayers: dbLobby.max_players,
+    status: dbLobby.status,
+    createdAt: dbLobby.created_at,
+    currentPlayers: dbLobby.lobby_players ? dbLobby.lobby_players.map(p => p.user_id) : [],
+    winnerId: dbLobby.winner_id
+  };
+};
 
 const useLobbyStore = create((set, get) => ({
   lobbies: [],
   currentLobby: null,
-  filters: { game: '', status: '', college: '', search: '' },
+  filters: { game: '', status: '', search: '' },
   isLoading: false,
   error: null,
-  totalPages: 1,
-  currentPage: 1,
 
-  setFilters: (filters) => set((s) => ({ filters: { ...s.filters, ...filters }, currentPage: 1 })),
-  setPage: (page) => set({ currentPage: page }),
+  setFilters: (filters) => set((s) => ({ filters: { ...s.filters, ...filters } })),
 
-  // ─── Fetch all lobbies ──────────────────────────────────
   fetchLobbies: async () => {
     set({ isLoading: true, error: null });
     try {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 600));
-        const { filters } = get();
-        let filtered = [...MOCK_LOBBIES];
-        if (filters.game) filtered = filtered.filter((l) => l.game === filters.game);
-        if (filters.status) filtered = filtered.filter((l) => l.status === filters.status);
-        if (filters.search)
-          filtered = filtered.filter((l) =>
-            l.title.toLowerCase().includes(filters.search.toLowerCase())
-          );
-        set({ lobbies: filtered, totalPages: 1 });
-      } else {
-        const { filters, currentPage } = get();
-        const { data } = await lobbyApi.getLobbies({ ...filters, page: currentPage });
-        set({ lobbies: data.lobbies, totalPages: data.totalPages });
-      }
+      const { filters } = get();
+      
+      let query = supabase
+        .from('lobbies')
+        .select(`
+          *,
+          host:profiles!lobbies_host_id_fkey(id, name, avatar_url, college),
+          lobby_players(user_id, status)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (filters.game) query = query.eq('game', filters.game);
+      if (filters.status) query = query.eq('status', filters.status);
+      if (filters.search) query = query.ilike('title', `%${filters.search}%`);
+
+      const { data, error } = await query;
+      if (error) throw error;
+      set({ lobbies: data.map(mapLobby) });
     } catch (err) {
+      console.error(err);
       set({ error: err.message });
     } finally {
       set({ isLoading: false });
     }
   },
 
-  // ─── Fetch single lobby ─────────────────────────────────
   fetchLobbyById: async (id) => {
     set({ isLoading: true, currentLobby: null, error: null });
     try {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 400));
-        const lobby = MOCK_LOBBIES.find((l) => l._id === id) || null;
-        set({ currentLobby: lobby });
-        if (!lobby) set({ error: 'Lobby not found' });
-      } else {
-        const { data } = await lobbyApi.getLobbyById(id);
-        set({ currentLobby: data });
-      }
+      const { data, error } = await supabase
+        .from('lobbies')
+        .select(`
+          *,
+          host:profiles!lobbies_host_id_fkey(id, name, avatar_url, college),
+          lobby_players(user_id, status, profiles(name, avatar_url))
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      set({ currentLobby: mapLobby(data) });
     } catch (err) {
+      console.error(err);
       set({ error: err.message });
     } finally {
       set({ isLoading: false });
     }
   },
 
-  // ─── Create lobby ───────────────────────────────────────
   createLobby: async (formData) => {
     try {
-      if (USE_MOCK) {
-        await new Promise((r) => setTimeout(r, 800));
-        const newLobby = { _id: `l_${Date.now()}`, ...formData, status: 'open', currentPlayers: [] };
-        set((s) => ({ lobbies: [newLobby, ...s.lobbies] }));
-        toast.success('Lobby created! 🎮');
-        return { success: true, data: newLobby };
-      }
-      const { data } = await lobbyApi.createLobby(formData);
-      set((s) => ({ lobbies: [data, ...s.lobbies] }));
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('You must be logged in to create a lobby');
+
+      const newLobbyData = {
+        title: formData.title,
+        game: formData.game,
+        bid_amount: parseInt(formData.bidAmount) || 0,
+        max_players: parseInt(formData.maxPlayers) || 2,
+        host_id: session.user.id,
+        status: 'open'
+      };
+
+      const { data, error } = await supabase
+        .from('lobbies')
+        .insert(newLobbyData)
+        .select(`
+          *,
+          host:profiles!lobbies_host_id_fkey(id, name, avatar_url, college),
+          lobby_players(user_id, status)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      await supabase.from('lobby_players').insert({
+        lobby_id: data.id,
+        user_id: session.user.id,
+        status: 'ready'
+      });
+
       toast.success('Lobby created! 🎮');
-      return { success: true, data };
+      get().fetchLobbies();
+      return { success: true, data: mapLobby(data) };
     } catch (err) {
+      toast.error(err.message);
       return { success: false, message: err.message };
     }
   },
 
-  // ─── Join lobby ─────────────────────────────────────────
-  joinLobby: async (id, userId) => {
+  joinLobby: async (lobbyId) => {
     try {
-      if (!USE_MOCK) await lobbyApi.joinLobby(id);
-      else await new Promise((r) => setTimeout(r, 400));
-      set((s) => ({
-        lobbies: s.lobbies.map((l) =>
-          l._id === id ? { ...l, currentPlayers: [...l.currentPlayers, userId] } : l
-        ),
-        currentLobby: s.currentLobby?._id === id
-          ? { ...s.currentLobby, currentPlayers: [...s.currentLobby.currentPlayers, userId] }
-          : s.currentLobby,
-      }));
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('You must be logged in to join');
+
+      const { error } = await supabase
+        .from('lobby_players')
+        .insert({
+          lobby_id: lobbyId,
+          user_id: session.user.id,
+          status: 'ready'
+        });
+
+      if (error) {
+        if (error.code === '23505') throw new Error('You are already in this lobby!');
+        throw error;
+      }
+
       toast.success('Joined lobby! Good luck ⚡');
+      get().fetchLobbyById(lobbyId);
       return { success: true };
     } catch (err) {
+      toast.error(err.message);
       return { success: false, message: err.message };
     }
   },
 
-  // ─── Submit result ──────────────────────────────────────
-  submitResult: async (id, data) => {
+  submitResult: async (lobbyId, data) => {
     try {
-      if (!USE_MOCK) await lobbyApi.submitResult(id, data);
-      else await new Promise((r) => setTimeout(r, 600));
-      set((s) => ({
-        currentLobby: s.currentLobby?._id === id
-          ? { ...s.currentLobby, status: 'completed', winnerId: data.winnerId }
-          : s.currentLobby,
-      }));
-      toast.success('Result submitted!');
-      return { success: true };
+       const { error } = await supabase
+         .from('lobbies')
+         .update({ status: 'completed', winner_id: data.winnerId })
+         .eq('id', lobbyId);
+
+       if (error) throw error;
+       toast.success('Result submitted!');
+       get().fetchLobbyById(lobbyId);
+       return { success: true };
     } catch (err) {
+      toast.error(err.message);
       return { success: false, message: err.message };
     }
-  },
+  }
 }));
 
 export default useLobbyStore;
