@@ -15,7 +15,7 @@ export const GAMES = [
   'Carrom',
   'Table Tennis',
   'Custom',
-];
+]
 
 export const GAME_ICONS = {
   'Valorant': '🎯',
