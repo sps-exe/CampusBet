@@ -3,8 +3,11 @@
  * Merges Dev1 (auth/landing/UI) + Dev2 (lobbies/tournaments/dashboard/wallet)
  */
 
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { supabase } from './lib/supabase';
+import useAuthStore from './store/authStore';
 
 // Layout
 import Navbar from './components/layout/Navbar';
@@ -28,6 +31,23 @@ import Profile          from './pages/Profile';
 import Wallet           from './pages/Wallet';
 
 const App = () => {
+  useEffect(() => {
+    // Initial user load to verify token validity
+    useAuthStore.getState().loadUser();
+
+    // Listen for auth state changes (e.g. login, logout, token refresh across tabs)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        useAuthStore.setState({ user: null, session: null, isAuthenticated: false });
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        useAuthStore.getState().loadUser();
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, []);
   return (
     <BrowserRouter>
       <Navbar />

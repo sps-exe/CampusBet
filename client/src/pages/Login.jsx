@@ -107,12 +107,6 @@ const Login = () => {
               </Link>
             </p>
           </div>
-
-          <div className="mt-4 p-3 bg-bg-elevated rounded-xl">
-            <p className="text-xs text-text-muted text-center">
-              Demo: <span className="text-cyan-400 font-mono">demo@college.edu</span> / <span className="text-cyan-400 font-mono">password</span>
-            </p>
-          </div>
         </div>
       </motion.div>
     </div>
