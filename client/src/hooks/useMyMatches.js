@@ -10,13 +10,17 @@ const useMyMatches = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?._id) {
-      setMatches([]);
-      setIsLoading(false);
-      return;
-    }
+    let isCancelled = false;
 
     const fetchMatches = async () => {
+      if (!user?._id) {
+        if (!isCancelled) {
+          setMatches([]);
+          setIsLoading(false);
+        }
+        return;
+      }
+
       setIsLoading(true);
       try {
         // Step 1: get all lobby IDs this user participated in
@@ -42,30 +46,39 @@ const useMyMatches = () => {
 
         // Step 3: shape each lobby into a clean match object
         const mappedMatches = completedLobbies.map((lobby) => {
+          const playerCount = lobby.lobby_players?.length || 2;
           const isWinner = lobby.winner_id === user._id;
-          const opponent = lobby.lobby_players
-            .find((p) => p.user_id !== user._id)?.profiles
-            || { name: 'Unknown Opponent' };
+          const opponents = lobby.lobby_players.filter((p) => p.user_id !== user._id);
+          const primaryOpponent = opponents[0]?.profiles || { name: 'Unknown Opponent' };
+          const opponentLabel = opponents.length > 1
+            ? `${primaryOpponent.name} + ${opponents.length - 1} more`
+            : primaryOpponent.name;
 
           return {
             _id: lobby.id,
             game: lobby.game,
-            opponent: { name: opponent.name, avatarUrl: opponent.avatar_url },
+            opponent: { name: opponentLabel, avatarUrl: primaryOpponent.avatar_url },
             result: isWinner ? 'won' : 'lost',
-            creditsChange: isWinner ? lobby.bid_amount : -lobby.bid_amount,
+            creditsChange: isWinner
+              ? lobby.bid_amount * Math.max(playerCount - 1, 1)
+              : -lobby.bid_amount,
             date: lobby.created_at,
           };
         });
 
-        setMatches(mappedMatches);
+        if (!isCancelled) setMatches(mappedMatches);
       } catch (err) {
         console.error('Failed to fetch matches:', err);
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) setIsLoading(false);
       }
     };
 
     fetchMatches();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [user]);
 
   return { matches, isLoading };

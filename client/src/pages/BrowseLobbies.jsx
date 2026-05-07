@@ -16,7 +16,7 @@ const STATUS_OPTIONS = [
 
 const BrowseLobbies = () => {
   const { user } = useAuth();
-  const { lobbies, isLoading, filters, setFilters, fetchLobbies, joinLobby } = useLobbies();
+  const { lobbies, isLoading, filters, setFilters, joinLobby } = useLobbies();
   const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -24,7 +24,7 @@ const BrowseLobbies = () => {
   useEffect(() => {
     const t = setTimeout(() => setFilters({ search: searchInput }), 400);
     return () => clearTimeout(t);
-  }, [searchInput]);
+  }, [searchInput, setFilters]);
 
   const activeFiltersCount = [filters.game, filters.status].filter(Boolean).length;
 

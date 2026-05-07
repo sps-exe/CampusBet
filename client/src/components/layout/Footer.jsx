@@ -1,34 +1,33 @@
 /**
- * CampusArena — Footer
+ * CampusBet — Footer
  */
 
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { Trophy, Github, Twitter, Instagram, Mail } from 'lucide-react';
 
 const FOOTER_LINKS = {
   Platform: [
+    { label: 'Browse Lobbies',      path: '/lobbies' },
     { label: 'Browse Tournaments', path: '/tournaments' },
     { label: 'Leaderboard',        path: '/leaderboard' },
-    { label: 'How It Works',       path: '/#how-it-works' },
-    { label: 'Pricing',            path: '/pricing' },
+    { label: 'Wallet',             path: '/wallet' },
   ],
   Play: [
-    { label: 'Valorant',         path: '/tournaments?game=valorant' },
-    { label: 'BGMI',             path: '/tournaments?game=bgmi' },
-    { label: 'FIFA / EA FC',     path: '/tournaments?game=fifa' },
-    { label: 'Chess',            path: '/tournaments?game=chess' },
-    { label: 'Super Smash Bros', path: '/tournaments?game=smash' },
+    { label: 'Valorant',         path: '/tournaments' },
+    { label: 'Chess',            path: '/tournaments' },
+    { label: 'FIFA / EA FC',     path: '/tournaments' },
+    { label: 'Mario Kart',       path: '/tournaments' },
   ],
   Organise: [
     { label: 'Host a Tournament', path: '/tournaments/create' },
-    { label: 'Sponsor a Tournament', path: '/#sponsors' },
-    { label: 'Host Dashboard',    path: '/host' },
+    { label: 'Create a Lobby',    path: '/lobbies/create' },
+    { label: 'Manage Profile',    path: '/profile' },
   ],
   Company: [
-    { label: 'About',          path: '/about' },
-    { label: 'Privacy Policy', path: '/privacy' },
-    { label: 'Terms of Use',   path: '/terms' },
-    { label: 'Contact',        path: '/contact' },
+    { label: 'Dashboard',      path: '/dashboard' },
+    { label: 'Profile',        path: '/profile' },
+    { label: 'Login',          path: '/login' },
+    { label: 'Signup',         path: '/signup' },
   ],
 };
 
@@ -36,7 +35,7 @@ const SOCIALS = [
   { icon: <Github size={18} />,    href: 'https://github.com',    label: 'GitHub' },
   { icon: <Twitter size={18} />,   href: 'https://twitter.com',   label: 'Twitter' },
   { icon: <Instagram size={18} />, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: <Mail size={18} />,      href: 'mailto:hello@campusarena.in', label: 'Email' },
+  { icon: <Mail size={18} />,      href: 'mailto:hello@campusbet.app', label: 'Email' },
 ];
 
 const Footer = () => {
@@ -91,7 +90,7 @@ const Footer = () => {
                   color: 'var(--color-text-primary)',
                 }}
               >
-                Campus<span className="text-gradient">Arena</span>
+                Campus<span className="text-gradient">Bet</span>
               </span>
             </Link>
             <p
@@ -102,7 +101,7 @@ const Footer = () => {
                 maxWidth: 220,
               }}
             >
-              The premier skill-based tournament platform built exclusively for college campuses.
+              A simple campus gaming frontend for lobbies, tournaments, and virtual credit tracking.
             </p>
 
             {/* Socials */}
@@ -194,7 +193,7 @@ const Footer = () => {
           }}
         >
           <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-            © {new Date().getFullYear()} CampusArena. Made with 🎮 for campus gamers.
+            © {new Date().getFullYear()} CampusBet. Made for campus gamers.
           </p>
           <p style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
             Virtual credits only · No real money · No gambling

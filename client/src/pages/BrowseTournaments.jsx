@@ -1,35 +1,43 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Trophy, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Trophy, SlidersHorizontal, X, Plus } from 'lucide-react';
 import useTournamentStore from '../store/tournamentStore';
 import useAuth from '../hooks/useAuth';
 import TournamentCard from '../components/tournament/TournamentCard';
 import { CardSkeleton, EmptyState } from '../components/ui/Skeleton';
 import { GAMES } from '../utils/constants';
+import Button from '../components/ui/Button';
 
 const BrowseTournaments = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { tournaments, isLoading, filters, setFilters, fetchTournaments } = useTournamentStore();
   const [searchInput, setSearchInput] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => { fetchTournaments(); }, [filters]);
+  useEffect(() => { fetchTournaments(); }, [fetchTournaments, filters]);
 
   useEffect(() => {
     const t = setTimeout(() => setFilters({ search: searchInput }), 400);
     return () => clearTimeout(t);
-  }, [searchInput]);
+  }, [searchInput, setFilters]);
 
   const activeCount = [filters.game, filters.status].filter(Boolean).length;
 
   return (
     <div className="min-h-screen bg-grid pt-24 pb-12 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold">
-            <span className="gradient-text">Tournaments</span>
-          </h1>
-          <p className="text-text-muted text-sm mt-1">{tournaments.length} tournaments · Entry via campus credits</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold">
+              <span className="gradient-text">Tournaments</span>
+            </h1>
+            <p className="text-text-muted text-sm mt-1">{tournaments.length} tournaments · Entry via campus credits</p>
+          </div>
+          <Button variant="primary" icon={Plus} onClick={() => navigate('/tournaments/create')}>
+            Host Tournament
+          </Button>
         </div>
 
         {/* Search + filters */}

@@ -2,7 +2,7 @@
 
 # ⚡ CampusBet
 
-**Skill-based campus gaming economy — 1v1 lobbies, multi-round tournaments, and a live leaderboard powered by real Supabase data.**
+**Frontend-first campus gaming platform — create lobbies, host tournaments, track virtual credits, and view a live leaderboard with Supabase data.**
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://campus-bet.vercel.app)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
@@ -20,7 +20,7 @@ CampusBet is a campus-exclusive competitive gaming platform where students chall
 
 **Core features:**
 - 🎮 **Lobbies** — create or join 1v1 / 2v2 / squad match rooms with a credit bid
-- 🏆 **Tournaments** — single-elimination brackets hosted by verified users
+- 🏆 **Tournaments** — browse, host, and join single-elimination events
 - 📊 **Leaderboard** — live rankings sorted by wins across all players
 - 💳 **Wallet** — real-time credit balance and full match transaction history
 - 👤 **Profile** — editable display name, college, and lifetime stats
@@ -38,7 +38,7 @@ CampusBet is a campus-exclusive competitive gaming platform where students chall
 | Forms | React Hook Form |
 | Deployment | Vercel |
 
-**Architecture:** Pure frontend SPA — no custom backend server. The app calls Supabase directly from the browser via the Supabase JS client. Row-Level Security (RLS) policies on the database enforce data access rules so users can only read/write their own records.
+**Architecture:** Pure frontend SPA — no custom backend server. The app calls Supabase directly from the browser via the Supabase JS client. The frontend handles page state, form flows, and display logic, while Supabase stores auth and app data.
 
 ---
 
@@ -74,7 +74,7 @@ CampusBet/
 profiles            → one row per user (extends Supabase auth.users)
 lobbies             → match rooms (game, bid_amount, status, winner_id)
 lobby_players       → join table: users ↔ lobbies
-tournaments         → tournament events (format, prize_pool, start_date)
+tournaments         → tournament events (format, prize_pool, start/end date)
 tournament_participants → join table: users ↔ tournaments
 ```
 
@@ -127,7 +127,7 @@ To deploy your own instance:
 ## Key Design Decisions
 
 **Why Supabase directly (no Express backend)?**
-Supabase provides auth, database, and Row-Level Security out of the box. Building a separate Express server would add complexity and latency for no real gain at this scale. All sensitive data access is enforced at the database layer through RLS policies.
+Supabase provides auth and database storage out of the box. For a student project, this keeps the app easier to understand because the main logic stays inside the React frontend instead of being split across frontend and backend services.
 
 **Why Zustand instead of Redux or Context?**
 Zustand is minimal — no boilerplate, no providers. The `persist` middleware handles localStorage session persistence in two lines. It scales well for a project of this size.
@@ -137,6 +137,8 @@ Compliance. Real-money wagering between students would require gaming licenses. 
 
 ---
 
-## License
+## Notes
 
-MIT — see [LICENSE](./LICENSE).
+- This repo is intentionally frontend-first and classroom-friendly.
+- Most app behavior lives in React pages, hooks, and Zustand stores.
+- GitHub shows the language as JavaScript because React components here are written in `.js` / `.jsx` files.

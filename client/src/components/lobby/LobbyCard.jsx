@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, Zap, Clock, Eye } from 'lucide-react';
+import { Users, Zap, Clock } from 'lucide-react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { formatCredits, getLobbyStatus, countdown, slotsLabel } from '../../utils/formatters';
@@ -17,7 +17,6 @@ const LobbyCard = ({ lobby, onJoin, currentUserId }) => {
   const isJoined = lobby.currentPlayers?.includes(currentUserId);
   const isFull = filledSlots >= lobby.maxPlayers;
   const canJoin = lobby.status === 'open' && !isJoined && !isFull;
-  const spectatorCount = lobby.spectatorBids?.length || 0;
 
   const statusVariant = {
     open: 'success',
@@ -67,18 +66,12 @@ const LobbyCard = ({ lobby, onJoin, currentUserId }) => {
           />
         </div>
 
-        {/* Schedule + spectators */}
+        {/* Schedule */}
         <div className="flex items-center justify-between text-xs text-text-muted">
           <span className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {lobby.status === 'open' ? countdown(lobby.scheduledAt) : status.label}
           </span>
-          {spectatorCount > 0 && (
-            <span className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              {spectatorCount} watching
-            </span>
-          )}
         </div>
 
         {/* Description snippet */}

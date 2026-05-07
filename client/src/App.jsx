@@ -1,31 +1,40 @@
-// App.jsx — root component. Sets up routing, the navbar, and toast notifications.
-// On mount it checks for an existing Supabase session so users stay logged in on refresh.
+// App.jsx — root component. Sets up routing, navbar, and toast notifications.
+// All page components are lazy-loaded so the initial bundle stays small.
+// Each page is only downloaded when the user first navigates to it.
 
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { supabase } from './lib/supabase';
 import useAuthStore from './store/authStore';
 
-import Navbar        from './components/layout/Navbar';
+import Navbar         from './components/layout/Navbar';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
-// Public pages
+// Public pages — loaded immediately (small, needed before auth check)
 import Landing  from './pages/Landing';
 import Login    from './pages/Login';
 import Signup   from './pages/Signup';
 import NotFound from './pages/NotFound';
 
-// Authenticated pages
-import Dashboard        from './pages/Dashboard';
-import BrowseLobbies    from './pages/BrowseLobbies';
-import LobbyDetail      from './pages/LobbyDetail';
-import CreateLobby      from './pages/CreateLobby';
-import BrowseTournaments from './pages/BrowseTournaments';
-import TournamentDetail from './pages/TournamentDetail';
-import Leaderboard      from './pages/Leaderboard';
-import Profile          from './pages/Profile';
-import Wallet           from './pages/Wallet';
+// Authenticated pages — lazy-loaded (only downloaded when the user navigates there)
+const Dashboard         = lazy(() => import('./pages/Dashboard'));
+const BrowseLobbies     = lazy(() => import('./pages/BrowseLobbies'));
+const LobbyDetail       = lazy(() => import('./pages/LobbyDetail'));
+const CreateLobby       = lazy(() => import('./pages/CreateLobby'));
+const BrowseTournaments = lazy(() => import('./pages/BrowseTournaments'));
+const CreateTournament  = lazy(() => import('./pages/CreateTournament'));
+const TournamentDetail  = lazy(() => import('./pages/TournamentDetail'));
+const Leaderboard       = lazy(() => import('./pages/Leaderboard'));
+const Profile           = lazy(() => import('./pages/Profile'));
+const Wallet            = lazy(() => import('./pages/Wallet'));
+
+// Minimal spinner shown while a lazy page chunk is downloading
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+  </div>
+);
 
 const App = () => {
   useEffect(() => {
@@ -48,7 +57,7 @@ const App = () => {
     <BrowserRouter>
       <Navbar />
 
-      {/* Global toast notifications (success / error popups) */}
+      {/* Global toast notifications */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -67,26 +76,30 @@ const App = () => {
         }}
       />
 
-      <Routes>
-        {/* Public — anyone can visit */}
-        <Route path="/"       element={<Landing />} />
-        <Route path="/login"  element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+      {/* Suspense wraps all lazy routes — shows the spinner while the chunk loads */}
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public — anyone can visit */}
+          <Route path="/"       element={<Landing />} />
+          <Route path="/login"  element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
-        {/* Protected — redirects to /login if not authenticated */}
-        <Route path="/dashboard"       element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/lobbies"         element={<ProtectedRoute><BrowseLobbies /></ProtectedRoute>} />
-        <Route path="/lobbies/create"  element={<ProtectedRoute><CreateLobby /></ProtectedRoute>} />
-        <Route path="/lobbies/:id"     element={<ProtectedRoute><LobbyDetail /></ProtectedRoute>} />
-        <Route path="/tournaments"     element={<ProtectedRoute><BrowseTournaments /></ProtectedRoute>} />
-        <Route path="/tournaments/:id" element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
-        <Route path="/leaderboard"     element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-        <Route path="/profile"         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/wallet"          element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+          {/* Protected — redirects to /login if not authenticated */}
+          <Route path="/dashboard"       element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/lobbies"         element={<ProtectedRoute><BrowseLobbies /></ProtectedRoute>} />
+          <Route path="/lobbies/create"  element={<ProtectedRoute><CreateLobby /></ProtectedRoute>} />
+          <Route path="/lobbies/:id"     element={<ProtectedRoute><LobbyDetail /></ProtectedRoute>} />
+          <Route path="/tournaments"     element={<ProtectedRoute><BrowseTournaments /></ProtectedRoute>} />
+          <Route path="/tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
+          <Route path="/tournaments/:id" element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
+          <Route path="/leaderboard"     element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+          <Route path="/profile"         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/wallet"          element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
 
-        {/* 404 fallback */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* 404 fallback */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

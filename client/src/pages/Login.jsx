@@ -6,7 +6,6 @@ import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import { COLLEGE_EMAIL_HINT } from '../utils/constants';
 
 const Login = () => {
   const navigate = useNavigate();

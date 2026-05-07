@@ -4,7 +4,7 @@ import { Trophy } from 'lucide-react';
  * BracketView — visual single-elimination bracket
  * Renders rounds as columns with match cards connected by lines.
  */
-const MatchCard = ({ match, round }) => {
+const MatchCard = ({ match }) => {
   const isComplete = match?.status === 'completed';
   return (
     <div className="bg-bg-elevated border border-white/10 rounded-lg overflow-hidden w-44 flex-shrink-0">
@@ -70,7 +70,7 @@ const BracketView = ({ bracket, totalParticipants = 8 }) => {
                 style={{ minHeight: `${round.matches.length * 80}px` }}
               >
                 {round.matches.map((match) => (
-                  <MatchCard key={match._id} match={match} round={round.round} />
+                  <MatchCard key={match._id} match={match} />
                 ))}
               </div>
             </div>
@@ -93,7 +93,7 @@ const BracketView = ({ bracket, totalParticipants = 8 }) => {
             </h4>
             <div className="flex flex-col justify-around gap-6">
               {round.matches?.map((match) => (
-                <MatchCard key={match._id} match={match} round={round.round} />
+                <MatchCard key={match._id} match={match} />
               ))}
             </div>
           </div>

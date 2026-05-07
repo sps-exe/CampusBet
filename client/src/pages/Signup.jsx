@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Zap, Mail, Lock, User, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import Button from '../components/ui/Button';
@@ -14,8 +14,8 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState('');
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm();
-  const watchPassword = watch('password', '');
+  const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
+  const watchPassword = useWatch({ control, name: 'password', defaultValue: '' });
 
   const onSubmit = async (data) => {
     setApiError('');

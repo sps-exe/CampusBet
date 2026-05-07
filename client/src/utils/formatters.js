@@ -1,4 +1,4 @@
-import { formatDistanceToNow, format, isPast, isFuture } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 
 /** Format a number as campus credits: 1450 → "1,450 ⚡" */
 export const formatCredits = (amount, showIcon = true) => {
@@ -35,7 +35,7 @@ export const formatDateShort = (dateStr) => {
   try {
     return format(new Date(dateStr), 'MMM d');
   } catch {
-    return '';
+    return 'TBD';
   }
 };
 

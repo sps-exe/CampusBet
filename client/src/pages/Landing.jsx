@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Zap, Trophy, Gamepad2, BarChart2, ArrowRight,
+  Zap, Trophy, Gamepad2, ArrowRight,
   Shield, Users, Star, ChevronRight,
 } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
@@ -19,7 +19,7 @@ const features = [
   {
     icon: Zap,
     title: 'Place Bids',
-    desc: 'Put your campus credits on the line. Spectators can back their favourite player too.',
+    desc: 'Use your campus credits to join matches and keep score across the platform.',
     color: 'text-cyan-400',
     bg: 'bg-cyan-500/10',
     border: 'border-cyan-500/20',
@@ -27,7 +27,7 @@ const features = [
   {
     icon: Trophy,
     title: 'Win & Climb',
-    desc: 'Winners collect all credits. Rise through the campus leaderboard.',
+    desc: 'Win matches, improve your record, and move up the campus leaderboard.',
     color: 'text-warning',
     bg: 'bg-warning/10',
     border: 'border-warning/20',
@@ -37,7 +37,7 @@ const features = [
 const steps = [
   { num: '01', title: 'Sign up with college email', desc: 'Only students at your institution can join. You get 500 ⚡ credits to start.' },
   { num: '02', title: 'Find or create a lobby', desc: 'Browse open matches or host your own. Set the bid and the game.' },
-  { num: '03', title: 'Play & collect', desc: 'Win the match, claim the credits. Build your reputation on campus.' },
+  { num: '03', title: 'Play & report results', desc: 'Finish the match, submit the result, and build your reputation on campus.' },
 ];
 
 const games = ['Valorant', 'Chess', 'FIFA / EA FC', 'BGMI', 'Smash Bros', 'Mario Kart', 'Carrom', 'Table Tennis'];
@@ -48,7 +48,7 @@ const Landing = () => {
 
   useEffect(() => {
     if (isAuthenticated) navigate('/dashboard', { replace: true });
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="bg-grid min-h-screen text-text-primary">

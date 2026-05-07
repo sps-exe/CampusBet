@@ -22,7 +22,7 @@ const TournamentDetail = () => {
   const [tab, setTab] = useState('Overview');
   const [registering, setRegistering] = useState(false);
 
-  useEffect(() => { fetchTournamentById(id); }, [id]);
+  useEffect(() => { fetchTournamentById(id); }, [fetchTournamentById, id]);
 
   if (isLoading) return <PageLoader />;
   if (!tournament) return (

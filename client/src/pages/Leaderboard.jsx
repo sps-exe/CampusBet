@@ -1,11 +1,28 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, TrendingUp } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { Avatar } from '../components/tournament/ParticipantList';
 import { calcWinRate, formatCredits } from '../utils/formatters';
 import { GAMES, LEADERBOARD_PERIODS } from '../utils/constants';
 import { supabase } from '../lib/supabase';
+
+const getPeriodStart = (period) => {
+  if (period === 'all') return null;
+
+  const now = new Date();
+  const start = new Date(now);
+
+  if (period === 'week') {
+    start.setDate(now.getDate() - 7);
+  }
+
+  if (period === 'month') {
+    start.setMonth(now.getMonth() - 1);
+  }
+
+  return start;
+};
 
 const PodiumCard = ({ user, position }) => {
   const medals = { 1: { icon: '🥇', color: 'text-warning', border: 'border-warning/30', bg: 'bg-warning/10', h: 'h-24' },
@@ -39,7 +56,7 @@ const Leaderboard = () => {
   const { user } = useAuth();
   const [period, setPeriod] = useState('all');
   const [game, setGame] = useState('');
-  const [leaderboard, setLeaderboard] = useState([]);
+  const [completedLobbies, setCompletedLobbies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -47,21 +64,71 @@ const Leaderboard = () => {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('matches_won', { ascending: false })
-          .limit(50);
-        
+          .from('lobbies')
+          .select(`
+            id,
+            game,
+            created_at,
+            winner_id,
+            lobby_players(
+              user_id,
+              profiles(id, name, college, avatar_url, credits)
+            )
+          `)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false });
+
         if (error) throw error;
-        setLeaderboard(data.map((p, i) => ({ ...p, rank: i + 1 })));
+        setCompletedLobbies(data || []);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchLeaderboard();
   }, []);
+
+  const periodStart = getPeriodStart(period);
+  const filteredLobbies = completedLobbies.filter((lobby) => {
+    if (game && lobby.game !== game) return false;
+    if (periodStart && new Date(lobby.created_at) < periodStart) return false;
+    return true;
+  });
+
+  const playersMap = new Map();
+
+  filteredLobbies.forEach((lobby) => {
+    (lobby.lobby_players || []).forEach((player) => {
+      const profile = player.profiles;
+      if (!profile) return;
+
+      const current = playersMap.get(player.user_id) || {
+        id: profile.id || player.user_id,
+        name: profile.name || 'Unknown Player',
+        college: profile.college || 'Unknown College',
+        avatar_url: profile.avatar_url || '',
+        credits: profile.credits || 0,
+        matches_won: 0,
+        matches_played: 0,
+      };
+
+      current.matches_played += 1;
+      if (lobby.winner_id === player.user_id) {
+        current.matches_won += 1;
+      }
+
+      playersMap.set(player.user_id, current);
+    });
+  });
+
+  const leaderboard = Array.from(playersMap.values())
+    .sort((a, b) => {
+      if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
+      return b.matches_played - a.matches_played;
+    })
+    .map((player, index) => ({ ...player, rank: index + 1 }));
 
   const top3 = leaderboard.slice(0, 3);
   const rest = leaderboard.slice(3);

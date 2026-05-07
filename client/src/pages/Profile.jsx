@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
-import { User, Trophy, Swords, Star, Edit2, Check } from 'lucide-react';
+import { User, Trophy, Swords, Edit2, Check, Calendar, Mail, Shield } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import useMyMatches from '../hooks/useMyMatches';
 import { Avatar } from '../components/tournament/ParticipantList';
@@ -11,21 +11,9 @@ import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import StatCard from '../components/dashboard/StatCard';
 import ActivityFeed from '../components/dashboard/ActivityFeed';
-import { calcWinRate, formatCredits } from '../utils/formatters';
+import { calcWinRate, formatCredits, formatDateTime } from '../utils/formatters';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-
-const BADGE_COLORS = {
-  'Campus Champion': 'purple',
-  'Valorant Pro': 'cyan',
-  'Chess Master': 'success',
-  'Tournament Host': 'warning',
-  'Newcomer': 'muted',
-  'Veteran': 'purple',
-  'Legend': 'cyan',
-  'BGMI King': 'success',
-  'Undefeated': 'warning',
-};
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -88,7 +76,7 @@ const Profile = () => {
             <div className="flex flex-wrap items-center gap-3">
               <Badge variant="muted">{user?.college}</Badge>
               <Badge variant={user?.role === 'host' ? 'cyan' : 'purple'}>{user?.role}</Badge>
-              <span className="text-xs text-text-muted">Rank #{user?.rank || '—'}</span>
+              <span className="text-xs text-text-muted">Member profile</span>
             </div>
           </div>
         </motion.div>
@@ -102,22 +90,27 @@ const Profile = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Badges */}
+          {/* Account summary */}
           <div className="bg-bg-card border border-white/5 rounded-2xl p-6">
             <h2 className="font-display font-semibold text-lg flex items-center gap-2 mb-4">
-              <Star className="w-5 h-5 text-warning" /> Badges
+              <Shield className="w-5 h-5 text-cyan-400" /> Account Summary
             </h2>
-            {user?.badges?.length ? (
-              <div className="flex flex-wrap gap-2">
-                {user.badges.map((badge) => (
-                  <Badge key={badge} variant={BADGE_COLORS[badge] || 'muted'} size="md">
-                    {badge}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-text-muted text-sm">No badges yet. Win matches to earn them!</p>
-            )}
+            <div className="space-y-3">
+              {[
+                { icon: Mail, label: 'Email', value: user?.email || 'Not available' },
+                { icon: User, label: 'Display Name', value: user?.name || 'Not available' },
+                { icon: Shield, label: 'Role', value: user?.role || 'player' },
+                { icon: Calendar, label: 'Joined', value: formatDateTime(user?.createdAt) },
+              ].map(({ icon: Icon, label, value }) => (
+                <div key={label} className="flex items-start gap-3 p-3 rounded-xl bg-bg-elevated">
+                  <Icon className="w-4 h-4 text-text-muted mt-0.5" />
+                  <div>
+                    <p className="text-xs text-text-muted">{label}</p>
+                    <p className="text-sm text-text-primary">{value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Match history */}

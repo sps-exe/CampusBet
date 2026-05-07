@@ -1,6 +1,6 @@
 /**
- * CampusArena — Form Validators
- * Used by Login, Signup, and other forms for client-side validation.
+ * CampusBet — Form Validators
+ * Simple helpers for form validation.
  */
 
 import { isValidCollegeEmail } from './colleges';
@@ -20,7 +20,7 @@ export const getPasswordStrength = (password) => {
     uppercase: /[A-Z]/.test(password),
     lowercase: /[a-z]/.test(password),
     number: /\d/.test(password),
-    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password),
   };
 
   const score = Object.values(checks).filter(Boolean).length;
@@ -56,7 +56,7 @@ export const isStrongPassword = (password) => {
   if (!password || password.length < 8) return false;
   if (!/[A-Z]/.test(password)) return false;
   if (!/\d/.test(password)) return false;
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return false;
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) return false;
   return true;
 };
 
@@ -124,7 +124,7 @@ export const validateSignupForm = (data) => {
     errors.password = 'Password must include at least one uppercase letter';
   } else if (!/\d/.test(password)) {
     errors.password = 'Password must include at least one number';
-  } else if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  } else if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     errors.password = 'Password must include at least one special character';
   }
 

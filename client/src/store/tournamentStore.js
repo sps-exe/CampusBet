@@ -17,7 +17,7 @@ const mapTournament = (dbTourney) => {
     maxParticipants: dbTourney.max_participants,
     status: dbTourney.status,
     startDate: dbTourney.start_date,
-    endDate: dbTourney.end_date,
+    endDate: dbTourney.end_date || dbTourney.start_date,
     rules: dbTourney.rules,
     hostId: dbTourney.host_id,
     host: dbTourney.host || null,
@@ -117,6 +117,8 @@ const useTournamentStore = create((set, get) => ({
           prize_pool: parseInt(formData.prizePool) || 0,
           max_participants: parseInt(formData.maxParticipants) || 16,
           start_date: new Date(formData.startDate).toISOString(),
+          end_date: formData.endDate ? new Date(formData.endDate).toISOString() : new Date(formData.startDate).toISOString(),
+          rules: formData.rules?.trim() || null,
           host_id: session.user.id,
           status: 'upcoming',
         })
@@ -143,6 +145,25 @@ const useTournamentStore = create((set, get) => ({
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('You must be logged in to register');
+
+      const { data: tournament, error: tournamentError } = await supabase
+        .from('tournaments')
+        .select('id, status, max_participants, tournament_participants(user_id)')
+        .eq('id', tournamentId)
+        .single();
+
+      if (tournamentError) throw tournamentError;
+      if (tournament.status !== 'upcoming') {
+        throw new Error('Registration is closed for this tournament');
+      }
+
+      const participants = tournament.tournament_participants?.map((player) => player.user_id) || [];
+      if (participants.includes(session.user.id)) {
+        throw new Error('You are already registered!');
+      }
+      if (participants.length >= tournament.max_participants) {
+        throw new Error('This tournament is already full');
+      }
 
       const { error } = await supabase.from('tournament_participants').insert({
         tournament_id: tournamentId,

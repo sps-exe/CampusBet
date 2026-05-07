@@ -28,7 +28,7 @@ const mapProfile = (dbProfile) => {
 
 const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       session: null,
       isAuthenticated: false,
@@ -115,7 +115,7 @@ const useAuthStore = create(
           if (profileError) throw profileError;
 
           set({ user: mapProfile(profile), session, isAuthenticated: true });
-        } catch (err) {
+        } catch {
           set({ user: null, session: null, isAuthenticated: false });
         } finally {
           set({ isLoading: false });

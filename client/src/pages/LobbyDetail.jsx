@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Zap, Users, Clock, Eye, Trophy,
+  ArrowLeft, Zap, Users, Clock, Trophy,
   CheckCircle, AlertTriangle, Gamepad2,
 } from 'lucide-react';
 import useLobbies from '../hooks/useLobbies';
@@ -29,7 +29,7 @@ const LobbyDetail = () => {
   const [resultLoading, setResultLoading] = useState(false);
   const [joinLoading, setJoinLoading] = useState(false);
 
-  useEffect(() => { fetchLobbyById(id); }, [id]);
+  useEffect(() => { fetchLobbyById(id); }, [fetchLobbyById, id]);
 
   if (isLoading) return <PageLoader />;
   if (!lobby) return (
@@ -44,7 +44,6 @@ const LobbyDetail = () => {
   const status = getLobbyStatus(lobby.status);
   const gameIcon = GAME_ICONS[lobby.game] || '🎮';
   const isJoined = lobby.currentPlayers?.includes(user?._id);
-  const isHost = lobby.hostId === user?._id;
   const joinable = canJoinLobby(lobby, user?._id);
   const statusVariant = { open: 'success', 'in-progress': 'warning', completed: 'muted', cancelled: 'error' }[lobby.status] || 'muted';
 
@@ -112,7 +111,7 @@ const LobbyDetail = () => {
                 { icon: Zap, label: 'Bid Amount', value: formatCredits(lobby.bidAmount), color: 'text-cyan-400' },
                 { icon: Users, label: 'Players', value: `${lobby.currentPlayers?.length || 0} / ${lobby.maxPlayers}`, color: 'text-purple-400' },
                 { icon: Clock, label: 'Scheduled', value: lobby.status === 'open' ? countdown(lobby.scheduledAt) : status.label, color: 'text-text-secondary' },
-                { icon: Eye, label: 'Spectators', value: lobby.spectatorBids?.length || 0, color: 'text-text-secondary' },
+                { icon: Trophy, label: 'Host', value: lobby.hostName, color: 'text-text-secondary' },
               ].map(({ icon: Icon, label, value, color }) => (
                 <div key={label} className="bg-bg-elevated rounded-xl p-4">
                   <Icon className={`w-4 h-4 ${color} mb-2`} />
@@ -180,7 +179,9 @@ const LobbyDetail = () => {
                 </div>
                 <div>
                   <p className="text-sm text-success font-semibold">Match Completed</p>
-                  <p className="text-xs text-text-muted mt-0.5">Winner collected {formatCredits(lobby.bidAmount * lobby.maxPlayers)}</p>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Winner gained {formatCredits(lobby.bidAmount * Math.max((lobby.currentPlayers?.length || 2) - 1, 1))}
+                  </p>
                 </div>
               </div>
             )}
@@ -192,22 +193,6 @@ const LobbyDetail = () => {
           </div>
         </div>
 
-        {/* Spectator bids */}
-        {lobby.spectatorBids?.length > 0 && (
-          <div className="bg-bg-card border border-white/5 rounded-2xl p-6">
-            <h2 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
-              <Eye className="w-5 h-5 text-warning" /> Spectator Bids
-            </h2>
-            <div className="space-y-2">
-              {lobby.spectatorBids.map((bid, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-bg-elevated rounded-xl">
-                  <span className="text-sm text-text-secondary">Spectator {i + 1} backed a player</span>
-                  <span className="text-sm font-bold text-warning">{formatCredits(bid.amount)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Join confirmation modal */}
@@ -216,10 +201,10 @@ const LobbyDetail = () => {
           <div className="bg-bg-elevated rounded-xl p-4 text-center">
             <p className="text-text-muted text-sm">Bid amount</p>
             <p className="font-display text-3xl font-bold text-cyan-400">{formatCredits(lobby.bidAmount)}</p>
-            <p className="text-xs text-text-muted mt-1">Will be deducted from your wallet</p>
+            <p className="text-xs text-text-muted mt-1">This match will be added to the scoreboard after the result is submitted.</p>
           </div>
           <p className="text-text-secondary text-sm text-center">
-            Winner collects all {formatCredits(lobby.bidAmount * lobby.maxPlayers)}. Are you ready?
+            The winner gains {formatCredits(lobby.bidAmount * Math.max(lobby.maxPlayers - 1, 1))}. Are you ready?
           </p>
           <div className="flex gap-3">
             <Button variant="ghost" fullWidth onClick={() => setJoinModal(false)}>Cancel</Button>

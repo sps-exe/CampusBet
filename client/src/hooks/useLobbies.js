@@ -16,7 +16,7 @@ const useLobbies = (autoFetch = true) => {
 
   useEffect(() => {
     if (autoFetch) fetchLobbies();
-  }, [filters]); // re-fetch when filters change
+  }, [autoFetch, fetchLobbies, filters]); // re-fetch when filters change
 
   return {
     lobbies,

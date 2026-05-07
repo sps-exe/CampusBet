@@ -1,7 +1,6 @@
 /**
- * CampusArena — College Domain to College Name Mapping
- * Used for automatic college detection from institutional email addresses.
- * Dev 3 should validate against the same domain list on the backend.
+ * CampusBet — College Domain to College Name Mapping
+ * Used for simple frontend-side college detection from email addresses.
  */
 
 /** @type {Record<string, string>} */

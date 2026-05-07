@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { ArrowLeft, Gamepad2, Zap, Clock, FileText, ChevronRight } from 'lucide-react';
 import useLobbies from '../hooks/useLobbies';
 import useAuth from '../hooks/useAuth';
@@ -18,7 +18,7 @@ const CreateLobby = () => {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  const { register, handleSubmit, watch, formState: { errors }, trigger } = useForm({
+  const { control, register, handleSubmit, formState: { errors }, trigger } = useForm({
     defaultValues: {
       game: '', format: '1v1', maxPlayers: 2,
       bidAmount: 100, scheduledAt: '',
@@ -26,9 +26,9 @@ const CreateLobby = () => {
     },
   });
 
-  const watchGame = watch('game');
-  const watchFormat = watch('format');
-  const watchBid = watch('bidAmount');
+  const watchGame = useWatch({ control, name: 'game' });
+  const watchFormat = useWatch({ control, name: 'format' });
+  const watchBid = useWatch({ control, name: 'bidAmount' });
 
   const stepFields = [
     ['game', 'format', 'title'],
@@ -45,13 +45,12 @@ const CreateLobby = () => {
     setSubmitting(true);
     const maxPlayers = data.format === '1v1' ? 2 : data.format === '2v2' ? 4 : data.format === 'squad' ? 4 : 4;
     const result = await createLobby({
-      ...data,
+      title: data.title,
+      game: data.game,
+      bidAmount: data.bidAmount,
+      scheduledAt: data.scheduledAt,
+      description: data.description,
       maxPlayers,
-      hostId: user._id,
-      host: user,
-      college: user.college,
-      currentPlayers: [user._id],
-      spectatorBids: [],
     });
     setSubmitting(false);
     if (result.success) navigate('/lobbies');
@@ -179,7 +178,7 @@ const CreateLobby = () => {
                 <div className="bg-bg-elevated rounded-xl p-4 flex items-start gap-3">
                   <Zap className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
                   <p className="text-xs text-text-muted leading-relaxed">
-                    Your bid will be deducted when you create the lobby and refunded if you cancel before the match starts.
+                    Keep the bid amount realistic for your campus matches. Results are added after the lobby is completed.
                   </p>
                 </div>
               </>
@@ -207,9 +206,9 @@ const CreateLobby = () => {
                 <div className="bg-bg-elevated rounded-xl p-5 space-y-3">
                   <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Review</p>
                   {[
-                    { label: 'Game', value: watch('game') },
-                    { label: 'Format', value: watch('format') },
-                    { label: 'Bid', value: `${watch('bidAmount')} ⚡ per player` },
+                    { label: 'Game', value: watchGame || 'Not selected' },
+                    { label: 'Format', value: watchFormat || 'Not selected' },
+                    { label: 'Bid', value: `${watchBid || 0} ⚡ per player` },
                     { label: 'College', value: user?.college },
                   ].map(({ label, value }) => (
                     <div key={label} className="flex justify-between text-sm">

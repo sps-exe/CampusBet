@@ -20,7 +20,7 @@ const Dashboard = () => {
   const { matches, isLoading: isMatchesLoading } = useMyMatches();
   const navigate = useNavigate();
 
-  useEffect(() => { fetchLobbies(); }, []);
+  useEffect(() => { fetchLobbies(); }, [fetchLobbies]);
 
   const stats = user?.stats || {};
   const openLobbies = lobbies.filter((l) => l.status === 'open').slice(0, 3);
@@ -64,7 +64,7 @@ const Dashboard = () => {
               <StatCard label="Matches Played" value={stats.matchesPlayed || 0} icon={Swords} accent="purple" />
               <StatCard label="Matches Won" value={stats.matchesWon || 0} sub={`of ${stats.matchesPlayed || 0} played`} icon={Trophy} accent="cyan" />
               <StatCard label="Win Rate" value={calcWinRate(stats.matchesWon, stats.matchesPlayed)} icon={TrendingUp} accent="success" />
-              <StatCard label="Campus Rank" value={`#${user?.rank || '—'}`} icon={BarChart2Placeholder} accent="warning" />
+              <StatCard label="Tournaments Played" value={stats.tournamentsPlayed || 0} icon={BarChart2Placeholder} accent="warning" />
             </>
           )}
         </div>

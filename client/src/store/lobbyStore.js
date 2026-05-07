@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import useAuthStore from './authStore';
 
 // Converts a raw Supabase lobby row into the shape the UI expects
 const mapLobby = (dbLobby) => {
@@ -12,6 +13,7 @@ const mapLobby = (dbLobby) => {
     title: dbLobby.title,
     game: dbLobby.game,
     hostId: dbLobby.host_id,
+    host: dbLobby.host || null,
     hostName: dbLobby.host?.name || 'Unknown Host',
     college: dbLobby.host?.college || 'Unknown College',
     bidAmount: dbLobby.bid_amount,
@@ -25,7 +27,6 @@ const mapLobby = (dbLobby) => {
     // Raw lobby_players with nested profile data — used in LobbyDetail to show real names
     lobby_players: dbLobby.lobby_players || [],
     winnerId: dbLobby.winner_id,
-    spectatorBids: dbLobby.spectator_bids || [],
   };
 };
 
@@ -105,6 +106,8 @@ const useLobbyStore = create((set, get) => ({
           bid_amount: parseInt(formData.bidAmount) || 0,
           max_players: parseInt(formData.maxPlayers) || 2,
           host_id: session.user.id,
+          scheduled_at: formData.scheduledAt || null,
+          description: formData.description?.trim() || null,
           status: 'open',
         })
         .select(`
@@ -138,6 +141,23 @@ const useLobbyStore = create((set, get) => ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('You must be logged in to join');
 
+      const { data: lobby, error: lobbyError } = await supabase
+        .from('lobbies')
+        .select('id, status, max_players, lobby_players(user_id)')
+        .eq('id', lobbyId)
+        .single();
+
+      if (lobbyError) throw lobbyError;
+      if (lobby.status !== 'open') throw new Error('This lobby is no longer open');
+
+      const currentPlayers = lobby.lobby_players?.map((player) => player.user_id) || [];
+      if (currentPlayers.includes(session.user.id)) {
+        throw new Error('You are already in this lobby!');
+      }
+      if (currentPlayers.length >= lobby.max_players) {
+        throw new Error('This lobby is already full');
+      }
+
       const { error } = await supabase.from('lobby_players').insert({
         lobby_id: lobbyId,
         user_id: session.user.id,
@@ -147,6 +167,16 @@ const useLobbyStore = create((set, get) => ({
       if (error) {
         if (error.code === '23505') throw new Error('You are already in this lobby!');
         throw error;
+      }
+
+      const nextPlayerCount = currentPlayers.length + 1;
+      if (nextPlayerCount >= lobby.max_players) {
+        const { error: statusError } = await supabase
+          .from('lobbies')
+          .update({ status: 'in-progress' })
+          .eq('id', lobbyId);
+
+        if (statusError) throw statusError;
       }
 
       toast.success('Joined lobby! Good luck ⚡');
@@ -161,12 +191,50 @@ const useLobbyStore = create((set, get) => ({
   // Mark a lobby as completed and record the winner
   submitResult: async (lobbyId, data) => {
     try {
+      const { data: lobby, error: lobbyError } = await supabase
+        .from('lobbies')
+        .select('id, bid_amount, winner_id, lobby_players(user_id)')
+        .eq('id', lobbyId)
+        .single();
+
+      if (lobbyError) throw lobbyError;
+
+      const playerIds = lobby.lobby_players?.map((player) => player.user_id) || [];
+      if (!playerIds.length) throw new Error('No players found for this lobby');
+
       const { error } = await supabase
         .from('lobbies')
         .update({ status: 'completed', winner_id: data.winnerId })
         .eq('id', lobbyId);
 
       if (error) throw error;
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, credits, matches_played, matches_won')
+        .in('id', playerIds);
+
+      if (profilesError) throw profilesError;
+
+      const bidAmount = lobby.bid_amount || 0;
+      const winnerId = data.winnerId;
+      const winnerBonus = bidAmount * Math.max(playerIds.length - 1, 1);
+
+      const updates = profiles.map((profile) => {
+        const isWinner = profile.id === winnerId;
+        return {
+          id: profile.id,
+          credits: (profile.credits || 0) + (isWinner ? winnerBonus : -bidAmount),
+          matches_played: (profile.matches_played || 0) + 1,
+          matches_won: (profile.matches_won || 0) + (isWinner ? 1 : 0),
+        };
+      });
+
+      const { error: updateError } = await supabase.from('profiles').upsert(updates);
+      if (updateError) throw updateError;
+
+      await useAuthStore.getState().loadUser();
+
       toast.success('Result submitted!');
       get().fetchLobbyById(lobbyId);
       return { success: true };
