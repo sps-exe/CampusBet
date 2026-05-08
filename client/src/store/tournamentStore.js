@@ -109,6 +109,16 @@ const useTournamentStore = create((set, get) => ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('You must be logged in to host a tournament');
 
+      const prizePoolAmt = parseInt(formData.prizePool) || 0;
+
+      // Check if user has enough credits to fund the prize pool
+      if (prizePoolAmt > 0) {
+        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.user.id).single();
+        if (!profile || profile.credits < prizePoolAmt) {
+          throw new Error('Insufficient credits to fund the prize pool');
+        }
+      }
+
       const { data, error } = await supabase
         .from('tournaments')
         .insert({
@@ -116,7 +126,7 @@ const useTournamentStore = create((set, get) => ({
           game: formData.game,
           format: formData.format || 'Single Elimination',
           entry_fee: parseInt(formData.entryFee) || 0,
-          prize_pool: parseInt(formData.prizePool) || 0,
+          prize_pool: prizePoolAmt,
           max_participants: parseInt(formData.maxParticipants) || 16,
           start_date: new Date(formData.startDate).toISOString(),
           host_id: session.user.id,
@@ -130,6 +140,14 @@ const useTournamentStore = create((set, get) => ({
         .single();
 
       if (error) throw error;
+
+      // Deduct prize pool from the host's profile credits if prizePool > 0
+      if (prizePoolAmt > 0) {
+        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.user.id).single();
+        if (profile) {
+          await supabase.from('profiles').update({ credits: profile.credits - prizePoolAmt }).eq('id', session.user.id);
+        }
+      }
 
       toast.success('Tournament created! 🏆');
       get().fetchTournaments();
