@@ -4,7 +4,7 @@
 
 **A frontend-first campus gaming platform for lobbies, tournaments, virtual credits, and leaderboard tracking.**
 
-[![Deployment](https://img.shields.io/badge/Deployment-Unavailable-lightgrey)](#deployment)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://campusbet.vercel.app)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vitejs&logoColor=white)](https://vitejs.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
@@ -181,7 +181,9 @@ npm run lint
 
 The project is configured for deployment on Vercel.
 
-At the moment, the previously referenced public deployment is not active, so no working live production URL is listed here.
+Live production URL:
+
+- [https://campusbet.vercel.app](https://campusbet.vercel.app)
 
 To deploy:
 
