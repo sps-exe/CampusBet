@@ -60,6 +60,8 @@ const useTournamentStore = create((set, get) => ({
           host:profiles!tournaments_host_id_fkey(id, name, avatar_url, college),
           tournament_participants(user_id)
         `)
+        // Exclude garbage/test entries: real tournaments always have capacity > 0
+        .gt('max_participants', 0)
         .order('start_date', { ascending: true });
 
       if (filters.game)   query = query.eq('game', filters.game);

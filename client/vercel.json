@@ -1,5 +1,8 @@
 {
   "name": "campusarena",
   "framework": "vite",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/publicevents", "destination": "/tournaments" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

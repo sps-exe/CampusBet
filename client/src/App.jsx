@@ -90,8 +90,8 @@ const App = () => {
           <Route path="/lobbies/create"  element={<ProtectedRoute><CreateLobby /></ProtectedRoute>} />
           <Route path="/lobbies/:id"     element={<ProtectedRoute><LobbyDetail /></ProtectedRoute>} />
           <Route path="/tournaments"     element={<ProtectedRoute><BrowseTournaments /></ProtectedRoute>} />
-          <Route path="/tournaments/create" element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
-          <Route path="/tournaments/:id" element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
+          <Route path="/tournaments/create"   element={<ProtectedRoute><CreateTournament /></ProtectedRoute>} />
+          <Route path="/tournaments/:id"      element={<ProtectedRoute><TournamentDetail /></ProtectedRoute>} />
           <Route path="/leaderboard"     element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/profile"         element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/wallet"          element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
