@@ -1,10 +1,10 @@
-# CampusBet Teacher Guide
+# CampusArena Teacher Guide
 
 This file is a short explanation sheet for presenting the project.
 
 ## 1. What the project is
 
-CampusBet is a frontend-first React application for campus gaming.
+CampusArena is a frontend-first React application for campus gaming.
 
 Users can:
 - sign up with a college email
@@ -131,4 +131,4 @@ That is normal for a React project.
 
 ## 9. One-line summary for presentation
 
-CampusBet is a React + Supabase campus gaming app where users can create matches and tournaments, track virtual credits, and view rankings, all through a frontend-first architecture.
+CampusArena is a React + Supabase campus gaming app where users can create matches and tournaments, track virtual credits, and view rankings, all through a frontend-first architecture.

@@ -63,7 +63,7 @@ const Signup = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shadow-glow-purple">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="gradient-text">CampusBet</span>
+            <span className="gradient-text">CampusArena</span>
           </Link>
           <p className="text-text-muted text-sm">Join your campus gaming scene</p>
         </div>
@@ -155,7 +155,7 @@ const Signup = () => {
           </div>
 
           <p className="text-xs text-text-muted text-center mt-4 leading-relaxed">
-            By signing up you agree to our Terms of Service. No real money is ever involved on CampusBet.
+            By signing up you agree to our Terms of Service. No real money is ever involved on CampusArena.
           </p>
         </div>
       </motion.div>

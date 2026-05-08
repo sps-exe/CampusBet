@@ -2,14 +2,20 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm, useWatch } from 'react-hook-form';
-import { ArrowLeft, Gamepad2, Zap, Clock, FileText, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, FileText, ChevronRight } from 'lucide-react';
 import useLobbies from '../hooks/useLobbies';
 import useAuth from '../hooks/useAuth';
 import Button from '../components/ui/Button';
+import DateTimeField from '../components/ui/DateTimeField';
 import Input from '../components/ui/Input';
 import { GAMES, LOBBY_FORMATS } from '../utils/constants';
 
 const STEPS = ['Game & Format', 'Bid & Schedule', 'Rules & Review'];
+
+const combineDateAndTime = (date, time) => {
+  if (!date || !time) return '';
+  return `${date}T${time}`;
+};
 
 const CreateLobby = () => {
   const navigate = useNavigate();
@@ -18,10 +24,10 @@ const CreateLobby = () => {
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  const { control, register, handleSubmit, formState: { errors }, trigger } = useForm({
+  const { control, register, handleSubmit, formState: { errors }, trigger, setValue } = useForm({
     defaultValues: {
       game: '', format: '1v1', maxPlayers: 2,
-      bidAmount: 100, scheduledAt: '',
+      bidAmount: 100, scheduledDate: '', scheduledTime: '',
       title: '', description: '',
     },
   });
@@ -29,10 +35,12 @@ const CreateLobby = () => {
   const watchGame = useWatch({ control, name: 'game' });
   const watchFormat = useWatch({ control, name: 'format' });
   const watchBid = useWatch({ control, name: 'bidAmount' });
+  const watchScheduledDate = useWatch({ control, name: 'scheduledDate' });
+  const watchScheduledTime = useWatch({ control, name: 'scheduledTime' });
 
   const stepFields = [
     ['game', 'format', 'title'],
-    ['bidAmount', 'scheduledAt'],
+    ['bidAmount', 'scheduledDate', 'scheduledTime'],
     ['description'],
   ];
 
@@ -48,7 +56,7 @@ const CreateLobby = () => {
       title: data.title,
       game: data.game,
       bidAmount: data.bidAmount,
-      scheduledAt: data.scheduledAt,
+      scheduledAt: combineDateAndTime(data.scheduledDate, data.scheduledTime),
       description: data.description,
       maxPlayers,
     });
@@ -167,13 +175,19 @@ const CreateLobby = () => {
                   </p>
                 </div>
 
-                <Input
+                <DateTimeField
                   label="Scheduled Date & Time"
-                  type="datetime-local"
-                  icon={Clock}
-                  error={errors.scheduledAt?.message}
-                  {...register('scheduledAt', { required: 'Schedule is required' })}
+                  required
+                  dateValue={watchScheduledDate || ''}
+                  timeValue={watchScheduledTime || ''}
+                  onDateChange={(value) => setValue('scheduledDate', value, { shouldValidate: true })}
+                  onTimeChange={(value) => setValue('scheduledTime', value, { shouldValidate: true })}
+                  dateError={errors.scheduledDate?.message}
+                  timeError={errors.scheduledTime?.message}
                 />
+
+                <input type="hidden" {...register('scheduledDate', { required: 'Select a date' })} />
+                <input type="hidden" {...register('scheduledTime', { required: 'Select a time' })} />
 
                 <div className="bg-bg-elevated rounded-xl p-4 flex items-start gap-3">
                   <Zap className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />

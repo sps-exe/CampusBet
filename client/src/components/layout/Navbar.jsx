@@ -35,7 +35,7 @@ const Navbar = () => {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="gradient-text">CampusBet</span>
+          <span className="gradient-text">CampusArena</span>
         </Link>
 
         {isAuthenticated ? (

@@ -59,7 +59,7 @@ const Landing = () => {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="gradient-text">CampusBet</span>
+            <span className="gradient-text">CampusArena</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="text-sm text-text-secondary hover:text-text-primary transition-colors">Log in</Link>
@@ -105,7 +105,7 @@ const Landing = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-text-secondary text-lg sm:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
           >
-            CampusBet is a college-exclusive skill-based gaming platform.
+            CampusArena is a college-exclusive skill-based gaming platform.
             Challenge peers, place campus credit bids, and prove you're the best on campus.
           </motion.p>
 
@@ -146,7 +146,7 @@ const Landing = () => {
       {/* ── Features ── */}
       <section className="py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <h2 className="font-display text-3xl font-bold text-center mb-3">Why CampusBet?</h2>
+          <h2 className="font-display text-3xl font-bold text-center mb-3">Why CampusArena?</h2>
           <p className="text-text-muted text-center mb-12 max-w-xl mx-auto">Built for campus gaming culture. No real money — just pure skill on the line.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((f, i) => (
@@ -231,7 +231,7 @@ const Landing = () => {
 
       {/* ── Footer ── */}
       <footer className="border-t border-white/5 py-8 px-6 text-center text-text-muted text-sm">
-        <p>© 2025 CampusBet · College-exclusive · No real money involved · Built for capstone</p>
+        <p>© 2025 CampusArena · College-exclusive · No real money involved · Built for capstone</p>
       </footer>
     </div>
   );

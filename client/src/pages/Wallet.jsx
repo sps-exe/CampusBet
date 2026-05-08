@@ -67,7 +67,7 @@ const Wallet = () => {
           <Zap className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-text-muted leading-relaxed">
             Campus credits are <strong className="text-text-secondary">virtual currency</strong> with no monetary value.
-            They can only be used within CampusBet to join matches and tournaments. Credits are earned by winning matches and cannot be withdrawn or exchanged for real money.
+            They can only be used within CampusArena to join matches and tournaments. Credits are earned by winning matches and cannot be withdrawn or exchanged for real money.
           </p>
         </div>
 

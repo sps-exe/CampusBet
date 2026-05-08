@@ -1,5 +1,5 @@
 /**
- * CampusBet — College Domain to College Name Mapping
+ * CampusArena — College Domain to College Name Mapping
  * Used for simple frontend-side college detection from email addresses.
  */
 

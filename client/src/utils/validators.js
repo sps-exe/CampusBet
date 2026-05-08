@@ -1,5 +1,5 @@
 /**
- * CampusBet — Form Validators
+ * CampusArena — Form Validators
  * Simple helpers for form validation.
  */
 

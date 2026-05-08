@@ -3,12 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, Trophy, Calendar, Users, FileText, Zap,
+  ArrowLeft, Trophy, Users, FileText, Zap,
 } from 'lucide-react';
 import useTournamentStore from '../store/tournamentStore';
 import Button from '../components/ui/Button';
+import DateTimeField from '../components/ui/DateTimeField';
 import Input from '../components/ui/Input';
 import { GAMES, TOURNAMENT_FORMATS } from '../utils/constants';
+
+const combineDateAndTime = (date, time) => {
+  if (!date || !time) return '';
+  return `${date}T${time}`;
+};
 
 const CreateTournament = () => {
   const navigate = useNavigate();
@@ -19,6 +25,7 @@ const CreateTournament = () => {
     control,
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -29,7 +36,9 @@ const CreateTournament = () => {
       prizePool: 500,
       maxParticipants: 8,
       startDate: '',
+      startTime: '',
       endDate: '',
+      endTime: '',
       rules: '',
     },
   });
@@ -37,12 +46,22 @@ const CreateTournament = () => {
   const watchEntryFee = useWatch({ control, name: 'entryFee' });
   const watchMaxParticipants = useWatch({ control, name: 'maxParticipants' });
   const watchPrizePool = useWatch({ control, name: 'prizePool' });
+  const watchStartDate = useWatch({ control, name: 'startDate' });
+  const watchStartTime = useWatch({ control, name: 'startTime' });
+  const watchEndDate = useWatch({ control, name: 'endDate' });
+  const watchEndTime = useWatch({ control, name: 'endTime' });
 
   const suggestedPrizePool = (Number(watchEntryFee) || 0) * (Number(watchMaxParticipants) || 0);
 
   const onSubmit = async (formData) => {
     setSubmitting(true);
-    const result = await createTournament(formData);
+    const result = await createTournament({
+      ...formData,
+      startDate: combineDateAndTime(formData.startDate, formData.startTime),
+      endDate: formData.endDate && formData.endTime
+        ? combineDateAndTime(formData.endDate, formData.endTime)
+        : '',
+    });
     setSubmitting(false);
 
     if (result.success && result.data?._id) {
@@ -161,22 +180,32 @@ const CreateTournament = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
+              <DateTimeField
                 label="Start Date & Time"
-                type="datetime-local"
-                icon={Calendar}
-                error={errors.startDate?.message}
-                {...register('startDate', { required: 'Start date is required' })}
+                required
+                dateValue={watchStartDate || ''}
+                timeValue={watchStartTime || ''}
+                onDateChange={(value) => setValue('startDate', value, { shouldValidate: true })}
+                onTimeChange={(value) => setValue('startTime', value, { shouldValidate: true })}
+                dateError={errors.startDate?.message}
+                timeError={errors.startTime?.message}
               />
 
-              <Input
+              <DateTimeField
                 label="End Date & Time"
-                type="datetime-local"
-                icon={Calendar}
-                error={errors.endDate?.message}
-                {...register('endDate')}
+                dateValue={watchEndDate || ''}
+                timeValue={watchEndTime || ''}
+                onDateChange={(value) => setValue('endDate', value)}
+                onTimeChange={(value) => setValue('endTime', value)}
+                dateError={errors.endDate?.message}
+                timeError={errors.endTime?.message}
               />
             </div>
+
+            <input type="hidden" {...register('startDate', { required: 'Select a date' })} />
+            <input type="hidden" {...register('startTime', { required: 'Select a time' })} />
+            <input type="hidden" {...register('endDate')} />
+            <input type="hidden" {...register('endTime')} />
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-text-secondary">Rules</label>

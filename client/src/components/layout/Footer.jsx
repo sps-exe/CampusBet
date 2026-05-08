@@ -1,5 +1,5 @@
 /**
- * CampusBet — Footer
+ * CampusArena — Footer
  */
 
 import { Link } from 'react-router-dom';
@@ -35,7 +35,7 @@ const SOCIALS = [
   { icon: <Github size={18} />,    href: 'https://github.com',    label: 'GitHub' },
   { icon: <Twitter size={18} />,   href: 'https://twitter.com',   label: 'Twitter' },
   { icon: <Instagram size={18} />, href: 'https://instagram.com', label: 'Instagram' },
-  { icon: <Mail size={18} />,      href: 'mailto:hello@campusbet.app', label: 'Email' },
+  { icon: <Mail size={18} />,      href: 'mailto:hello@campusarena.app', label: 'Email' },
 ];
 
 const Footer = () => {
@@ -193,7 +193,7 @@ const Footer = () => {
           }}
         >
           <p style={{ fontSize: 13, color: 'var(--color-text-muted)' }}>
-            © {new Date().getFullYear()} CampusBet. Made for campus gamers.
+            © {new Date().getFullYear()} CampusArena. Made for campus gamers.
           </p>
           <p style={{ fontSize: 12, color: 'var(--color-text-muted)' }}>
             Virtual credits only · No real money · No gambling

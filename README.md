@@ -1,10 +1,10 @@
 <div align="center">
 
-# CampusBet
+# CampusArena
 
 **A frontend-first campus gaming platform for lobbies, tournaments, virtual credits, and leaderboard tracking.**
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://campusbet.vercel.app)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://campusarena.vercel.app)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vitejs&logoColor=white)](https://vitejs.dev)
 [![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
@@ -14,7 +14,7 @@
 
 ## Overview
 
-CampusBet is a college-focused competitive gaming platform where students can:
+CampusArena is a college-focused competitive gaming platform where students can:
 
 - create and join game lobbies
 - host and register for tournaments
@@ -67,7 +67,7 @@ The project is intentionally **frontend-first** and built to be easy to understa
 
 ## Architecture
 
-CampusBet uses a **pure frontend SPA architecture**.
+CampusArena uses a **pure frontend SPA architecture**.
 
 - React handles routing and UI rendering
 - Zustand stores manage state and app actions
@@ -79,7 +79,7 @@ This keeps the codebase simple for learning, presentations, and fast iteration.
 ## Project Structure
 
 ```bash
-CampusBet/
+CampusArena/
 ├── README.md
 ├── TEACHER_GUIDE.md
 └── client/
@@ -147,8 +147,8 @@ Typical usage:
 ### Setup
 
 ```bash
-git clone https://github.com/sps-exe/CampusBet.git
-cd CampusBet/client
+git clone https://github.com/sps-exe/CampusArena.git
+cd CampusArena/client
 npm install
 ```
 
@@ -183,7 +183,7 @@ The project is configured for deployment on Vercel.
 
 Live production URL:
 
-- [https://campusbet.vercel.app](https://campusbet.vercel.app)
+- [https://campusarena.vercel.app](https://campusarena.vercel.app)
 
 To deploy:
 
@@ -193,7 +193,7 @@ To deploy:
 
 ## Notes
 
-- CampusBet uses **virtual credits only**
+- CampusArena uses **virtual credits only**
 - No real money is involved
 - GitHub shows the main language as **JavaScript** because React components are written in `.js` and `.jsx` files
 

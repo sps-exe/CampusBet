@@ -128,7 +128,7 @@ const useAuthStore = create(
       addCredits: (amount) => set((s) => ({ user: { ...s.user, credits: (s.user?.credits || 0) + amount } })),
     }),
     {
-      name: 'campusbet-auth', // localStorage key
+      name: 'campusarena-auth', // localStorage key
       // Only persist what's needed; don't store isLoading etc.
       partialize: (s) => ({ user: s.user, session: s.session, isAuthenticated: s.isAuthenticated }),
     }

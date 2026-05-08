@@ -45,7 +45,7 @@ const Login = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shadow-glow-purple">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="gradient-text">CampusBet</span>
+            <span className="gradient-text">CampusArena</span>
           </Link>
           <p className="text-text-muted text-sm">Welcome back, champion</p>
         </div>

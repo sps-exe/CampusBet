@@ -13,6 +13,8 @@ const Input = forwardRef(({
   className = '',
   ...props
 }, ref) => {
+  const isDateLike = type === 'date' || type === 'time' || type === 'datetime-local';
+
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
@@ -34,6 +36,7 @@ const Input = forwardRef(({
             placeholder:text-text-muted
             focus:outline-none focus:ring-2 focus:border-transparent
             transition-all duration-200
+            ${isDateLike ? '[color-scheme:dark] min-h-[46px]' : ''}
             ${Icon ? 'pl-10' : ''}
             ${error
               ? 'border-error focus:ring-error/50'

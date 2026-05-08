@@ -1,4 +1,4 @@
-# CampusBet — Frontend
+# CampusArena — Frontend
 
 > React + Vite SPA. See the root [`README.md`](../README.md) for full documentation.
 

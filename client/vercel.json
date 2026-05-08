@@ -1,5 +1,5 @@
 {
-  "name": "campusbet",
+  "name": "campusarena",
   "framework": "vite",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
