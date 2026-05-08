@@ -50,8 +50,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 ```bash
-npm run dev        # http://localhost:5173
-npm run build      # production build
+npm run dev 
+npm run build
 ```
 
 ## Database Tables
