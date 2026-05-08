@@ -115,7 +115,7 @@ function MatchRow({ match }) {
 export default function Dashboard() {
   const navigate  = useNavigate();
   const { user }  = useAuth();
-  const { lobbies, isLoading: lobbiesLoading, joinLobby } = useLobbies();
+  const { lobbies, isLoading: lobbiesLoading, joinLobby, deleteLobby } = useLobbies();
   const { matches, isLoading: matchesLoading } = useMyMatches();
 
   // ── Site-owner featured lobby ──────────────────────────────────────────────
@@ -141,6 +141,11 @@ export default function Dashboard() {
     if (!res?.success) toast.error(res?.message || 'Could not join lobby');
   }
 
+  async function handleDelete(lobbyId) {
+    const res = await deleteLobby(lobbyId);
+    if (!res?.success) toast.error(res?.message || 'Could not delete lobby');
+  }
+
   return (
     <AppShell rightPanel={<RightStatsPanel gameCounts={gameCounts} />}>
       {/* Top bar */}
@@ -157,6 +162,7 @@ export default function Dashboard() {
             lobby={featuredLobby}
             currentUserId={user?._id}
             onJoin={handleJoin}
+            onDelete={handleDelete}
           />
         ) : (
           <div className="h-52 bg-wine-card rounded-2xl border border-wine-elevated flex flex-col items-center justify-center gap-3">

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Zap, Users, Flame, Eye } from 'lucide-react';
+import { Zap, Users, Flame, Eye, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCredits, countdown, getInitials } from '../../utils/formatters';
 import { GAME_ICONS } from '../../utils/constants';
@@ -10,7 +10,7 @@ import { GAME_ICONS } from '../../utils/constants';
  * Matches the "Valorant / Popular" hero card from the reference image.
  * All data comes from the lobby object — zero hardcoding.
  */
-export default function HeroLobbyCard({ lobby, onJoin, currentUserId }) {
+export default function HeroLobbyCard({ lobby, onJoin, onDelete, currentUserId }) {
   const navigate = useNavigate();
   if (!lobby) return null;
 
@@ -114,6 +114,23 @@ export default function HeroLobbyCard({ lobby, onJoin, currentUserId }) {
             <Users className="w-4 h-4" />
             View Details
           </motion.button>
+
+          {/* Delete button — only visible to the lobby host */}
+          {lobby.hostId === currentUserId && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (window.confirm('Delete this lobby? This cannot be undone.')) {
+                  onDelete?.(lobby._id);
+                }
+              }}
+              className="ml-auto flex items-center gap-1.5 px-3 py-2.5 bg-error/10 border border-error/30 hover:bg-error/20 hover:border-error rounded-xl text-error text-sm font-medium transition-colors"
+              title="Delete lobby"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>

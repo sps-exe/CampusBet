@@ -13,6 +13,7 @@ const useLobbies = (autoFetch = true) => {
   const createLobby = useLobbyStore((s) => s.createLobby);
   const joinLobby = useLobbyStore((s) => s.joinLobby);
   const submitResult = useLobbyStore((s) => s.submitResult);
+  const deleteLobby = useLobbyStore((s) => s.deleteLobby);
 
   useEffect(() => {
     if (autoFetch) fetchLobbies();
@@ -30,6 +31,7 @@ const useLobbies = (autoFetch = true) => {
     createLobby,
     joinLobby,
     submitResult,
+    deleteLobby,
   };
 };
 

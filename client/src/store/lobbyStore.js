@@ -243,6 +243,32 @@ const useLobbyStore = create((set, get) => ({
       return { success: false, message: err.message };
     }
   },
+  // Delete a lobby — only the host can do this.
+  // We delete lobby_players first to satisfy the FK constraint, then the lobby.
+  deleteLobby: async (lobbyId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('You must be logged in');
+
+      // Remove all players from the lobby first (FK constraint)
+      await supabase.from('lobby_players').delete().eq('lobby_id', lobbyId);
+
+      const { error } = await supabase
+        .from('lobbies')
+        .delete()
+        .eq('id', lobbyId)
+        .eq('host_id', session.user.id); // RLS: only host can delete
+
+      if (error) throw error;
+
+      toast.success('Lobby deleted.');
+      get().fetchLobbies();
+      return { success: true };
+    } catch (err) {
+      toast.error(err.message);
+      return { success: false, message: err.message };
+    }
+  },
 }));
 
 export default useLobbyStore;
