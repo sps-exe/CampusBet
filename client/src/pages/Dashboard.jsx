@@ -118,9 +118,16 @@ export default function Dashboard() {
   const { lobbies, isLoading: lobbiesLoading, joinLobby } = useLobbies();
   const { matches, isLoading: matchesLoading } = useMyMatches();
 
+  // ── Site-owner featured lobby ──────────────────────────────────────────────
+  // Only lobbies created by the platform owner appear in the "Popular" hero
+  // slot. Change this ID if ownership transfers.
+  const OWNER_ID = '8f0bc8de-1cf0-47dc-9c34-de2a84a71c62'; // Shaurya Pratap Singh
+
   const openLobbies   = lobbies.filter(l => l.status === 'open');
-  const featuredLobby = openLobbies[0] || null;
-  const cardLobbies   = openLobbies.slice(1, 4);
+  const ownerLobbies  = openLobbies.filter(l => l.hostId === OWNER_ID);
+  const featuredLobby = ownerLobbies[0] || null;          // only owner's lobby shown as Popular
+  const cardLobbies   = openLobbies.slice(0, 4);          // all open lobbies shown in the grid
+
   const recentMatches = matches.slice(0, 3);
 
   // Aggregate per-game win counts from real match history
