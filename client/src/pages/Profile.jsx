@@ -1,154 +1,228 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { User, Trophy, Swords, Edit2, Check, Calendar, Mail, Shield } from 'lucide-react';
+import { User, Edit3, Mail, GraduationCap, Calendar, Gamepad2, Trophy, TrendingUp, Zap, Check } from 'lucide-react';
+import AppShell from '../components/layout/AppShell';
+import Modal from '../components/ui/Modal';
 import useAuth from '../hooks/useAuth';
 import useMyMatches from '../hooks/useMyMatches';
-import { Avatar } from '../components/tournament/ParticipantList';
-import Badge from '../components/ui/Badge';
-import Button from '../components/ui/Button';
-import Modal from '../components/ui/Modal';
-import Input from '../components/ui/Input';
-import StatCard from '../components/dashboard/StatCard';
-import ActivityFeed from '../components/dashboard/ActivityFeed';
-import { calcWinRate, formatCredits, formatDateTime } from '../utils/formatters';
-import { supabase } from '../lib/supabase';
-import toast from 'react-hot-toast';
+import { getInitials, timeFromNow, calcWinRate } from '../utils/formatters';
+import { GAME_ICONS } from '../utils/constants';
 
-const Profile = () => {
-  const { user, updateUser } = useAuth();
-  const { matches, isLoading } = useMyMatches();
-  const [editOpen, setEditOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+function StatCard({ label, value, icon: Icon, color }) {
+  return (
+    <div className="bg-wine-card border border-wine-elevated rounded-2xl p-5 flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color.bg}`}>
+        <Icon className={`w-5 h-5 ${color.text}`} />
+      </div>
+      <div>
+        <p className="text-white/40 text-xs">{label}</p>
+        <p className={`font-bold text-xl ${color.text}`}>{value}</p>
+      </div>
+    </div>
+  );
+}
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
-    defaultValues: { name: user?.name || '', college: user?.college || '' },
-  });
+export default function Profile() {
+  const { user, updateProfile } = useAuth();
+  const { matches, isLoading }  = useMyMatches();
+  const [editModal, setEditModal] = useState(false);
+  const [form, setForm]           = useState({ name: user?.name || '', college: user?.college || '' });
+  const [saving, setSaving]       = useState(false);
 
-  const onSave = async (data) => {
+  const stats    = user?.stats || {};
+  const winRate  = calcWinRate(stats.matchesWon, stats.matchesPlayed);
+
+  // Count games played from match history
+  const gameCounts = matches.reduce((acc, m) => {
+    acc[m.game] = (acc[m.game] || 0) + 1;
+    return acc;
+  }, {});
+
+  const handleSave = async () => {
     setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ name: data.name, college: data.college })
-        .eq('id', user._id);
-      if (error) throw error;
-      updateUser(data);
-      toast.success('Profile updated!');
-      setEditOpen(false);
-    } catch (err) {
-      toast.error(err.message || 'Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
+    await updateProfile?.(form);
+    setSaving(false);
+    setEditModal(false);
   };
 
-  const stats = user?.stats || {};
-  const winRate = calcWinRate(stats.matchesWon, stats.matchesPlayed);
-
   return (
-    <div className="min-h-screen bg-grid pt-24 pb-12 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-
-        {/* Profile header */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-bg-card border border-white/10 rounded-2xl overflow-hidden"
+    <AppShell>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-wine-elevated flex-shrink-0">
+        <h1 className="text-white font-bold text-lg flex items-center gap-2">
+          <User className="w-5 h-5 text-crimson" /> Profile
+        </h1>
+        <button
+          onClick={() => { setForm({ name: user?.name || '', college: user?.college || '' }); setEditModal(true); }}
+          className="flex items-center gap-2 px-4 py-2 bg-wine-card border border-wine-elevated hover:border-crimson/50 rounded-xl text-white/60 hover:text-white text-sm transition-colors"
         >
-          <div className="h-24 bg-gradient-to-r from-purple-600/40 via-pink-600/20 to-cyan-600/40" />
-          <div className="px-6 pb-6">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-10 mb-4">
-              <div className="flex items-end gap-4">
-                <div className="ring-4 ring-bg-card rounded-full">
-                  <Avatar user={user} size="xl" />
-                </div>
-                <div className="mb-1">
-                  <h1 className="font-display text-2xl font-bold text-text-primary">{user?.name}</h1>
-                  <p className="text-text-muted text-sm">{user?.email}</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" icon={Edit2} onClick={() => setEditOpen(true)}>
-                Edit Profile
-              </Button>
-            </div>
+          <Edit3 className="w-4 h-4" /> Edit Profile
+        </button>
+      </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="muted">{user?.college}</Badge>
-              <Badge variant={user?.role === 'host' ? 'cyan' : 'purple'}>{user?.role}</Badge>
-              <span className="text-xs text-text-muted">Member profile</span>
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+        {/* ── PROFILE HERO ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-wine-card border border-wine-elevated rounded-2xl p-6 flex items-center gap-6 relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-crimson-glow pointer-events-none opacity-50" />
+          {/* Large avatar */}
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-crimson to-credits flex items-center justify-center text-white text-2xl font-bold border-4 border-wine-elevated flex-shrink-0 shadow-glow-crimson-sm">
+            {getInitials(user?.name || '?')}
+          </div>
+          <div className="relative">
+            <h2 className="text-white font-bold text-2xl">{user?.name || '—'}</h2>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <span className="flex items-center gap-1 text-white/40 text-sm">
+                <GraduationCap className="w-4 h-4" /> {user?.college || '—'}
+              </span>
+              <span className="flex items-center gap-1 text-white/40 text-sm">
+                <Mail className="w-4 h-4" /> {user?.email || '—'}
+              </span>
+              <span className="flex items-center gap-1 text-white/40 text-sm">
+                <Calendar className="w-4 h-4" /> Joined {new Date(user?.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }) || '—'}
+              </span>
             </div>
+            <span className="mt-3 inline-block px-2.5 py-1 bg-crimson/15 border border-crimson/30 rounded-full text-crimson text-xs font-semibold">
+              Player
+            </span>
           </div>
         </motion.div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard label="Matches Played" value={stats.matchesPlayed || 0} icon={Swords} accent="purple" />
-          <StatCard label="Matches Won" value={stats.matchesWon || 0} icon={Trophy} accent="cyan" />
-          <StatCard label="Win Rate" value={winRate} accent="success" />
-          <StatCard label="Credits" value={formatCredits(user?.credits || 0, false)} accent="warning" />
+        {/* ── STAT CARDS ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="Matches" value={stats.matchesPlayed || 0} icon={Gamepad2} color={{ bg: 'bg-purple-500/15', text: 'text-purple-400' }} />
+          <StatCard label="Wins"    value={stats.matchesWon    || 0} icon={Trophy}   color={{ bg: 'bg-credits/15',    text: 'text-credits'    }} />
+          <StatCard label="Win Rate"value={winRate}                  icon={TrendingUp}color={{ bg: 'bg-success/15',   text: 'text-success'    }} />
+          <StatCard label="Credits" value={`${user?.credits || 0} ⚡`}icon={Zap}     color={{ bg: 'bg-crimson/15',   text: 'text-crimson'    }} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Account summary */}
-          <div className="bg-bg-card border border-white/5 rounded-2xl p-6">
-            <h2 className="font-display font-semibold text-lg flex items-center gap-2 mb-4">
-              <Shield className="w-5 h-5 text-cyan-400" /> Account Summary
-            </h2>
-            <div className="space-y-3">
+        {/* ── MATCH HISTORY + DETAILS ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Match history — 60% */}
+          <div className="lg:col-span-2 bg-wine-card border border-wine-elevated rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-wine-elevated">
+              <h2 className="text-white font-semibold text-sm">Match History</h2>
+            </div>
+            {isLoading ? (
+              <div className="p-5 space-y-3">
+                {Array(4).fill(0).map((_, i) => <div key={i} className="h-14 bg-wine-elevated animate-pulse rounded-xl" />)}
+              </div>
+            ) : matches.length === 0 ? (
+              <div className="p-8 text-center text-white/30 text-sm">No matches yet — join a lobby!</div>
+            ) : (
+              <div>
+                {matches.slice(0, 6).map((match, i) => {
+                  const isWon  = match.result === 'won';
+                  const isLost = match.result === 'lost';
+                  return (
+                    <div
+                      key={match._id || i}
+                      className={`flex items-center gap-4 px-5 py-3.5 border-b border-wine-elevated last:border-0 hover:bg-wine-elevated transition-colors
+                        ${isWon ? 'border-l-2 border-l-success' : isLost ? 'border-l-2 border-l-error' : ''}`}
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-wine-elevated flex items-center justify-center text-lg flex-shrink-0">
+                        {GAME_ICONS[match.game] || '🎮'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white text-sm font-semibold truncate">{match.title}</p>
+                        <p className="text-white/30 text-xs">{match.game}</p>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border flex-shrink-0
+                        ${isWon  ? 'bg-success/15 border-success/30 text-success' :
+                          isLost ? 'bg-error/15   border-error/30   text-error'   :
+                                   'bg-white/10   border-white/10   text-white/40'}`}>
+                        {match.result || 'Pending'}
+                      </span>
+                      <p className={`font-bold text-sm flex-shrink-0 ${match.creditsChange > 0 ? 'text-credits' : match.creditsChange < 0 ? 'text-error' : 'text-white/30'}`}>
+                        {match.creditsChange > 0 ? '+' : ''}{match.creditsChange || 0} ⚡
+                      </p>
+                      <p className="text-white/25 text-[10px] flex-shrink-0">{timeFromNow(match.date)}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Side details — 40% */}
+          <div className="space-y-4">
+            {/* Games played */}
+            <div className="bg-wine-card border border-wine-elevated rounded-2xl p-5">
+              <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+                <Gamepad2 className="w-4 h-4 text-crimson" /> Games Played
+              </h3>
+              {Object.entries(gameCounts).length === 0 ? (
+                <p className="text-white/30 text-xs">No games yet</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(gameCounts).map(([game, count]) => (
+                    <span key={game} className="flex items-center gap-1.5 px-3 py-1.5 bg-wine-elevated border border-wine-card rounded-full text-xs text-white/60">
+                      {GAME_ICONS[game] || '🎮'} {game}
+                      <span className="text-white/30">({count})</span>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Account details */}
+            <div className="bg-wine-card border border-wine-elevated rounded-2xl p-5 space-y-3">
+              <h3 className="text-white font-semibold text-sm mb-1">Account Details</h3>
               {[
-                { icon: Mail, label: 'Email', value: user?.email || 'Not available' },
-                { icon: User, label: 'Display Name', value: user?.name || 'Not available' },
-                { icon: Shield, label: 'Role', value: user?.role || 'player' },
-                { icon: Calendar, label: 'Joined', value: formatDateTime(user?.createdAt) },
-              ].map(({ icon: Icon, label, value }) => (
-                <div key={label} className="flex items-start gap-3 p-3 rounded-xl bg-bg-elevated">
-                  <Icon className="w-4 h-4 text-text-muted mt-0.5" />
+                { label: 'Email',    value: user?.email,   icon: Mail           },
+                { label: 'College',  value: user?.college, icon: GraduationCap  },
+                { label: 'Role',     value: 'Player',      icon: User           },
+              ].map(({ label, value, icon: Icon }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <Icon className="w-4 h-4 text-white/30 flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-text-muted">{label}</p>
-                    <p className="text-sm text-text-primary">{value}</p>
+                    <p className="text-white/30 text-[10px]">{label}</p>
+                    <p className="text-white text-xs font-medium">{value || '—'}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Match history */}
-          <div className="bg-bg-card border border-white/5 rounded-2xl p-6">
-            <h2 className="font-display font-semibold text-lg flex items-center gap-2 mb-4">
-              <Swords className="w-5 h-5 text-purple-400" /> Match History
-            </h2>
-            {isLoading ? (
-              <div className="flex justify-center py-6"><div className="w-6 h-6 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" /></div>
-            ) : (
-              <ActivityFeed matches={matches} />
-            )}
-          </div>
         </div>
       </div>
 
-      {/* Edit modal */}
-      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} title="Edit Profile" size="sm">
-        <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-          <Input
-            label="Display Name"
-            icon={User}
-            error={errors.name?.message}
-            {...register('name', { required: 'Name is required', minLength: { value: 2, message: 'Min 2 characters' } })}
-          />
-          <Input
-            label="College"
-            error={errors.college?.message}
-            {...register('college', { required: 'College is required' })}
-          />
-          <div className="flex gap-3 pt-2">
-            <Button variant="ghost" fullWidth type="button" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button variant="primary" fullWidth type="submit" loading={saving} icon={Check}>Save Changes</Button>
+      {/* ── EDIT MODAL ── */}
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} title="Edit Profile" size="sm">
+        <div className="space-y-4">
+          <div>
+            <label className="text-white/50 text-xs mb-1.5 block">Full Name</label>
+            <input
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              className="w-full bg-wine-elevated border border-wine-card focus:border-crimson/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none transition-colors"
+            />
           </div>
-        </form>
+          <div>
+            <label className="text-white/50 text-xs mb-1.5 block">College</label>
+            <input
+              value={form.college}
+              onChange={e => setForm(f => ({ ...f, college: e.target.value }))}
+              className="w-full bg-wine-elevated border border-wine-card focus:border-crimson/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none transition-colors"
+            />
+          </div>
+          <div className="flex gap-3 pt-1">
+            <button onClick={() => setEditModal(false)} className="flex-1 py-2.5 bg-wine-elevated border border-wine-card rounded-xl text-white/50 text-sm hover:text-white transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-crimson hover:bg-crimson-light rounded-xl text-white text-sm font-semibold transition-colors disabled:opacity-50"
+            >
+              <Check className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
       </Modal>
-    </div>
+    </AppShell>
   );
-};
-
-export default Profile;
+}

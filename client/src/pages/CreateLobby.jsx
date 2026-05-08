@@ -2,26 +2,76 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useForm, useWatch } from 'react-hook-form';
-import { ArrowLeft, Gamepad2, Zap, FileText, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Gamepad2, Zap, FileText, Check, ChevronRight } from 'lucide-react';
+import AppShell from '../components/layout/AppShell';
 import useLobbies from '../hooks/useLobbies';
 import useAuth from '../hooks/useAuth';
-import Button from '../components/ui/Button';
-import DateTimeField from '../components/ui/DateTimeField';
-import Input from '../components/ui/Input';
 import { GAMES, LOBBY_FORMATS } from '../utils/constants';
 
-const STEPS = ['Game & Format', 'Bid & Schedule', 'Rules & Review'];
+const STEPS = [
+  { label: 'Game & Format', icon: Gamepad2 },
+  { label: 'Bid & Schedule', icon: Zap },
+  { label: 'Rules & Review', icon: FileText },
+];
 
 const combineDateAndTime = (date, time) => {
   if (!date || !time) return '';
   return `${date}T${time}`;
 };
 
-const CreateLobby = () => {
+/* ─── Step indicator ─── */
+function StepIndicator({ current }) {
+  return (
+    <div className="flex items-center gap-2 mb-6">
+      {STEPS.map((s, i) => {
+        const done   = i < current;
+        const active = i === current;
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
+                ${done   ? 'bg-success text-white' :
+                  active ? 'bg-crimson text-white shadow-glow-crimson-sm' :
+                           'bg-wine-elevated border border-wine-card text-white/30'}`}>
+                {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
+              </div>
+              <span className={`text-xs font-medium hidden sm:block ${active ? 'text-white' : done ? 'text-success' : 'text-white/30'}`}>
+                {s.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`h-px w-8 sm:w-16 flex-shrink-0 ${i < current ? 'bg-success' : 'bg-wine-elevated'}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ─── Format card selector ─── */
+function FormatCard({ format, selected, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`p-4 rounded-xl border text-sm font-semibold text-left transition-all
+        ${selected
+          ? 'bg-crimson/15 border-crimson text-crimson'
+          : 'bg-wine-elevated border-wine-card text-white/50 hover:border-white/20 hover:text-white/70'
+        }`}
+    >
+      <p className="font-bold">{format.value.toUpperCase()}</p>
+      <p className="text-[11px] mt-0.5 opacity-70">{format.label}</p>
+    </button>
+  );
+}
+
+export default function CreateLobby() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { createLobby } = useLobbies(false);
-  const [step, setStep] = useState(0);
+  const [step, setStep]         = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
   const { control, register, handleSubmit, formState: { errors }, trigger, setValue } = useForm({
@@ -32,9 +82,9 @@ const CreateLobby = () => {
     },
   });
 
-  const watchGame = useWatch({ control, name: 'game' });
-  const watchFormat = useWatch({ control, name: 'format' });
-  const watchBid = useWatch({ control, name: 'bidAmount' });
+  const watchGame          = useWatch({ control, name: 'game' });
+  const watchFormat        = useWatch({ control, name: 'format' });
+  const watchBid           = useWatch({ control, name: 'bidAmount' });
   const watchScheduledDate = useWatch({ control, name: 'scheduledDate' });
   const watchScheduledTime = useWatch({ control, name: 'scheduledTime' });
 
@@ -46,12 +96,12 @@ const CreateLobby = () => {
 
   const nextStep = async () => {
     const valid = await trigger(stepFields[step]);
-    if (valid) setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (valid) setStep(s => Math.min(s + 1, STEPS.length - 1));
   };
 
   const onSubmit = async (data) => {
     setSubmitting(true);
-    const maxPlayers = data.format === '1v1' ? 2 : data.format === '2v2' ? 4 : data.format === 'squad' ? 4 : 4;
+    const maxPlayers = data.format === '1v1' ? 2 : 4;
     const result = await createLobby({
       title: data.title,
       game: data.game,
@@ -59,201 +109,207 @@ const CreateLobby = () => {
       scheduledAt: combineDateAndTime(data.scheduledDate, data.scheduledTime),
       description: data.description,
       maxPlayers,
+      format: data.format,
+      college: user?.college,
     });
     setSubmitting(false);
-    if (result.success) navigate('/lobbies');
+    if (result?.success) navigate('/lobbies');
   };
 
+  const prizePool = Number(watchBid || 0) * (watchFormat === '1v1' ? 1 : 3);
+
+  const inputClass = (hasError) =>
+    `w-full bg-wine-elevated border ${hasError ? 'border-error/50' : 'border-wine-card focus:border-crimson/50'} rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors`;
+
   return (
-    <div className="min-h-screen bg-grid pt-24 pb-12 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto">
-        <button onClick={() => navigate('/lobbies')} className="flex items-center gap-2 text-text-muted hover:text-text-primary text-sm transition-colors mb-6">
-          <ArrowLeft className="w-4 h-4" /> Back to Lobbies
+    <AppShell>
+      {/* Top bar */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-wine-elevated flex-shrink-0">
+        <button
+          onClick={() => navigate('/lobbies')}
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-wine-card border border-wine-elevated text-white/50 hover:text-white hover:border-crimson/50 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
         </button>
-
-        <div className="mb-8">
-          <h1 className="font-display text-2xl sm:text-3xl font-bold">Create a <span className="gradient-text">Lobby</span></h1>
-          <p className="text-text-muted text-sm mt-1">Set the stakes and challenge your campus</p>
+        <div>
+          <h1 className="text-white font-bold text-lg">Create a Lobby</h1>
+          <p className="text-white/40 text-xs">Set the stakes and challenge your campus</p>
         </div>
+      </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center gap-2 mb-8">
-          {STEPS.map((label, i) => (
-            <div key={i} className="flex items-center gap-2 flex-1">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                i < step ? 'bg-success text-white' : i === step ? 'bg-purple-500 text-white' : 'bg-bg-elevated text-text-muted'
-              }`}>
-                {i < step ? '✓' : i + 1}
-              </div>
-              <span className={`text-xs hidden sm:block ${i === step ? 'text-text-primary font-medium' : 'text-text-muted'}`}>
-                {label}
-              </span>
-              {i < STEPS.length - 1 && (
-                <div className={`flex-1 h-0.5 rounded ${i < step ? 'bg-success' : 'bg-bg-elevated'}`} />
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="max-w-lg mx-auto">
+          <StepIndicator current={step} />
+
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="bg-wine-card border border-wine-elevated rounded-2xl p-6 space-y-5"
+            >
+
+              {/* ── STEP 1: Game & Format ── */}
+              {step === 0 && (
+                <>
+                  <div>
+                    <label className="text-white/50 text-xs font-medium mb-1.5 block">Lobby Title</label>
+                    <input
+                      {...register('title', { required: 'Title is required' })}
+                      placeholder="Give your lobby a name..."
+                      className={inputClass(errors.title)}
+                    />
+                    {errors.title && <p className="text-error text-xs mt-1">{errors.title.message}</p>}
+                  </div>
+
+                  <div>
+                    <label className="text-white/50 text-xs font-medium mb-1.5 block">Game</label>
+                    <select
+                      {...register('game', { required: 'Select a game' })}
+                      className={`${inputClass(errors.game)} appearance-none`}
+                    >
+                      <option value="" className="bg-wine-card">Select a game...</option>
+                      {GAMES.map(g => <option key={g} value={g} className="bg-wine-card">{g}</option>)}
+                    </select>
+                    {errors.game && <p className="text-error text-xs mt-1">{errors.game.message}</p>}
+                  </div>
+
+                  <div>
+                    <label className="text-white/50 text-xs font-medium mb-2 block">Format</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {LOBBY_FORMATS.map(f => (
+                        <FormatCard
+                          key={f.value}
+                          format={f}
+                          selected={watchFormat === f.value}
+                          onClick={() => setValue('format', f.value)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
-            </div>
-          ))}
-        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            className="bg-bg-card border border-white/10 rounded-2xl p-6 sm:p-8 space-y-5"
-          >
-            {/* Step 0: Game & Format */}
-            {step === 0 && (
-              <>
-                <div className="flex items-center gap-2 mb-2">
-                  <Gamepad2 className="w-5 h-5 text-purple-400" />
-                  <h2 className="font-display font-semibold text-lg">Game & Format</h2>
-                </div>
+              {/* ── STEP 2: Bid & Schedule ── */}
+              {step === 1 && (
+                <>
+                  <div>
+                    <label className="text-white/50 text-xs font-medium mb-1.5 block">Bid Amount (⚡ credits)</label>
+                    <div className="flex items-center gap-3 px-4 py-3 bg-wine-elevated border border-wine-card focus-within:border-crimson/50 rounded-xl transition-colors">
+                      <Zap className="w-4 h-4 text-credits flex-shrink-0" />
+                      <input
+                        type="number"
+                        min="10"
+                        max={user?.credits || 500}
+                        {...register('bidAmount', { required: true, min: 10 })}
+                        className="flex-1 bg-transparent text-white text-sm outline-none"
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1.5">
+                      <p className="text-white/30 text-[10px]">Your balance: {user?.credits || 0} ⚡</p>
+                      <p className="text-credits text-[10px] font-semibold">Prize pool: {prizePool} ⚡</p>
+                    </div>
+                  </div>
 
-                <Input
-                  label="Lobby Title"
-                  placeholder="e.g. Valorant 1v1 — No Mercy"
-                  error={errors.title?.message}
-                  {...register('title', { required: 'Title is required', minLength: { value: 5, message: 'At least 5 characters' } })}
-                />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-white/50 text-xs font-medium mb-1.5 block">Date</label>
+                      <input
+                        type="date"
+                        {...register('scheduledDate', { required: 'Date required' })}
+                        className={inputClass(errors.scheduledDate)}
+                        style={{ colorScheme: 'dark' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/50 text-xs font-medium mb-1.5 block">Time</label>
+                      <input
+                        type="time"
+                        {...register('scheduledTime', { required: 'Time required' })}
+                        className={inputClass(errors.scheduledTime)}
+                        style={{ colorScheme: 'dark' }}
+                      />
+                    </div>
+                  </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-text-secondary">Game *</label>
-                  <select
-                    className={`bg-bg-elevated border rounded-lg px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/40 ${errors.game ? 'border-error' : 'border-white/10'}`}
-                    {...register('game', { required: 'Select a game' })}
-                  >
-                    <option value="">Select a game</option>
-                    {GAMES.map((g) => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                  {errors.game && <p className="text-xs text-error">{errors.game.message}</p>}
-                </div>
+                  {/* Info tip */}
+                  <div className="flex gap-3 p-3 bg-wine-elevated border border-credits/15 rounded-xl">
+                    <Zap className="w-4 h-4 text-credits flex-shrink-0 mt-0.5" />
+                    <p className="text-white/40 text-[11px] leading-relaxed">
+                      Credits are held until the match result is submitted. Winner receives the full prize pool.
+                    </p>
+                  </div>
+                </>
+              )}
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-text-secondary">Format *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {LOBBY_FORMATS.map((f) => (
-                      <label key={f.value} className={`cursor-pointer border rounded-xl p-3 text-center transition-all ${
-                        watchFormat === f.value
-                          ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-                          : 'border-white/10 text-text-muted hover:border-white/20'
-                      }`}>
-                        <input type="radio" value={f.value} className="sr-only" {...register('format')} />
-                        <p className="text-xs font-semibold">{f.label}</p>
-                      </label>
+              {/* ── STEP 3: Rules & Review ── */}
+              {step === 2 && (
+                <>
+                  <div>
+                    <label className="text-white/50 text-xs font-medium mb-1.5 block">Match Rules / Description</label>
+                    <textarea
+                      {...register('description')}
+                      rows={4}
+                      placeholder="Describe match rules, format, platforms used..."
+                      className="w-full bg-wine-elevated border border-wine-card focus:border-crimson/50 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors resize-none"
+                    />
+                  </div>
+
+                  {/* Review summary */}
+                  <div className="bg-wine-elevated border border-wine-card rounded-xl p-4 space-y-3">
+                    <p className="text-white font-semibold text-xs uppercase tracking-wider">Review</p>
+                    {[
+                      { label: 'Game',      value: watchGame || '—'           },
+                      { label: 'Format',    value: watchFormat?.toUpperCase() },
+                      { label: 'Bid',       value: `${watchBid} ⚡`          },
+                      { label: 'Schedule',  value: watchScheduledDate && watchScheduledTime
+                          ? `${watchScheduledDate} at ${watchScheduledTime}` : '—' },
+                      { label: 'College',   value: user?.college || '—'       },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex justify-between text-sm">
+                        <span className="text-white/40">{label}</span>
+                        <span className="text-white font-medium">{value}</span>
+                      </div>
                     ))}
                   </div>
-                </div>
-              </>
-            )}
-
-            {/* Step 1: Bid & Schedule */}
-            {step === 1 && (
-              <>
-                <div className="flex items-center gap-2 mb-2">
-                  <Zap className="w-5 h-5 text-cyan-400" />
-                  <h2 className="font-display font-semibold text-lg">Bid & Schedule</h2>
-                </div>
-
-                <div>
-                  <Input
-                    label="Bid Amount (⚡ credits per player)"
-                    type="number"
-                    placeholder="100"
-                    icon={Zap}
-                    error={errors.bidAmount?.message}
-                    {...register('bidAmount', {
-                      required: 'Bid amount required',
-                      min: { value: 10, message: 'Minimum 10 credits' },
-                      max: { value: user?.credits || 9999, message: `Max ${user?.credits} (your balance)` },
-                    })}
-                  />
-                  <p className="text-xs text-text-muted mt-1.5">
-                    Your balance: <span className="text-cyan-400 font-semibold">{user?.credits} ⚡</span> · Prize pool: <span className="text-success font-semibold">{(watchBid || 0) * (watchFormat === '1v1' ? 2 : 4)} ⚡</span>
-                  </p>
-                </div>
-
-                <DateTimeField
-                  label="Scheduled Date & Time"
-                  required
-                  dateValue={watchScheduledDate || ''}
-                  timeValue={watchScheduledTime || ''}
-                  onDateChange={(value) => setValue('scheduledDate', value, { shouldValidate: true })}
-                  onTimeChange={(value) => setValue('scheduledTime', value, { shouldValidate: true })}
-                  dateError={errors.scheduledDate?.message}
-                  timeError={errors.scheduledTime?.message}
-                />
-
-                <input type="hidden" {...register('scheduledDate', { required: 'Select a date' })} />
-                <input type="hidden" {...register('scheduledTime', { required: 'Select a time' })} />
-
-                <div className="bg-bg-elevated rounded-xl p-4 flex items-start gap-3">
-                  <Zap className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-text-muted leading-relaxed">
-                    Keep the bid amount realistic for your campus matches. Results are added after the lobby is completed.
-                  </p>
-                </div>
-              </>
-            )}
-
-            {/* Step 2: Rules & Review */}
-            {step === 2 && (
-              <>
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="w-5 h-5 text-success" />
-                  <h2 className="font-display font-semibold text-lg">Rules & Review</h2>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-text-secondary">Match Rules (optional)</label>
-                  <textarea
-                    rows={4}
-                    placeholder="e.g. Best of 3, no custom tactics, screenshot proof required..."
-                    className="bg-bg-elevated border border-white/10 rounded-lg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-purple-500/40 resize-none"
-                    {...register('description')}
-                  />
-                </div>
-
-                {/* Summary */}
-                <div className="bg-bg-elevated rounded-xl p-5 space-y-3">
-                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">Review</p>
-                  {[
-                    { label: 'Game', value: watchGame || 'Not selected' },
-                    { label: 'Format', value: watchFormat || 'Not selected' },
-                    { label: 'Bid', value: `${watchBid || 0} ⚡ per player` },
-                    { label: 'College', value: user?.college },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="flex justify-between text-sm">
-                      <span className="text-text-muted">{label}</span>
-                      <span className="text-text-primary font-medium">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Navigation */}
-            <div className="flex gap-3 pt-2">
-              {step > 0 && (
-                <Button variant="ghost" onClick={() => setStep((s) => s - 1)} type="button" className="flex-1">← Back</Button>
+                </>
               )}
+            </motion.div>
+
+            {/* Navigation buttons */}
+            <div className="flex justify-between mt-5">
+              <button
+                type="button"
+                onClick={() => step > 0 ? setStep(s => s - 1) : navigate('/lobbies')}
+                className="flex items-center gap-2 px-5 py-2.5 bg-wine-card border border-wine-elevated hover:border-white/20 rounded-xl text-white/60 hover:text-white text-sm transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {step === 0 ? 'Cancel' : 'Back'}
+              </button>
+
               {step < STEPS.length - 1 ? (
-                <Button variant="primary" onClick={nextStep} type="button" className="flex-1" icon={ChevronRight}>
-                  Continue
-                </Button>
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-crimson hover:bg-crimson-light rounded-xl text-white text-sm font-semibold transition-colors shadow-glow-crimson-sm"
+                >
+                  Continue <ChevronRight className="w-4 h-4" />
+                </button>
               ) : (
-                <Button variant="primary" type="submit" loading={submitting} className="flex-1" icon={Gamepad2}>
-                  Create Lobby
-                </Button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-crimson hover:bg-crimson-light rounded-xl text-white text-sm font-semibold transition-colors shadow-glow-crimson-sm disabled:opacity-60"
+                >
+                  <Gamepad2 className="w-4 h-4" />
+                  {submitting ? 'Creating...' : 'Create Lobby'}
+                </button>
               )}
             </div>
-          </motion.div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
-};
-
-export default CreateLobby;
+}

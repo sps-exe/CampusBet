@@ -8,7 +8,6 @@ import { Toaster } from 'react-hot-toast';
 import { supabase } from './lib/supabase';
 import useAuthStore from './store/authStore';
 
-import Navbar         from './components/layout/Navbar';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
 // Public pages — loaded immediately (small, needed before auth check)
@@ -55,7 +54,6 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Navbar />
 
       {/* Global toast notifications */}
       <Toaster
@@ -63,16 +61,16 @@ const App = () => {
         toastOptions={{
           duration: 3500,
           style: {
-            background: '#13131a',
+            background: '#321318',
             color: '#f4f4f5',
-            border: '1px solid #1e1e2e',
+            border: '1px solid rgba(180,40,40,0.3)',
             borderRadius: '12px',
             fontSize: '14px',
             fontFamily: 'Inter, sans-serif',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
           },
-          success: { iconTheme: { primary: '#10b981', secondary: '#13131a' } },
-          error:   { iconTheme: { primary: '#ef4444', secondary: '#13131a' } },
+          success: { iconTheme: { primary: '#4CAF50', secondary: '#321318' } },
+          error:   { iconTheme: { primary: '#ef4444', secondary: '#321318' } },
         }}
       />
 

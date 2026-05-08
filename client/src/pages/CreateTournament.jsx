@@ -1,238 +1,259 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm, useWatch } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import {
-  ArrowLeft, Trophy, Users, FileText, Zap,
-} from 'lucide-react';
-import useTournamentStore from '../store/tournamentStore';
-import Button from '../components/ui/Button';
-import DateTimeField from '../components/ui/DateTimeField';
-import Input from '../components/ui/Input';
+import { useForm, useWatch } from 'react-hook-form';
+import { ArrowLeft, Trophy, Zap, Check } from 'lucide-react';
+import AppShell from '../components/layout/AppShell';
+import useTournaments from '../hooks/useTournaments';
+import useAuth from '../hooks/useAuth';
 import { GAMES, TOURNAMENT_FORMATS } from '../utils/constants';
 
-const combineDateAndTime = (date, time) => {
-  if (!date || !time) return '';
-  return `${date}T${time}`;
-};
+const inputClass = (err) =>
+  `w-full bg-wine-elevated border ${err ? 'border-error/50' : 'border-wine-card focus:border-crimson/50'} rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors`;
 
-const CreateTournament = () => {
+function SectionDivider({ title }) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <p className="text-white/40 text-xs font-semibold uppercase tracking-wider whitespace-nowrap">{title}</p>
+      <div className="flex-1 h-px bg-wine-elevated" />
+    </div>
+  );
+}
+
+export default function CreateTournament() {
   const navigate = useNavigate();
-  const { createTournament } = useTournamentStore();
+  const { user } = useAuth();
+  const { createTournament } = useTournaments(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm({
+  const { control, register, handleSubmit, formState: { errors } } = useForm({
     defaultValues: {
-      title: '',
-      game: '',
-      format: 'single-elim',
-      entryFee: 50,
-      prizePool: 500,
-      maxParticipants: 8,
-      startDate: '',
-      startTime: '',
-      endDate: '',
-      endTime: '',
-      rules: '',
+      title: '', game: '', format: 'single-elim', description: '',
+      entryFee: 0, prizePool: 0, maxParticipants: 16,
+      startDate: '', startTime: '', endDate: '', endTime: '',
     },
   });
 
-  const watchEntryFee = useWatch({ control, name: 'entryFee' });
-  const watchMaxParticipants = useWatch({ control, name: 'maxParticipants' });
-  const watchPrizePool = useWatch({ control, name: 'prizePool' });
-  const watchStartDate = useWatch({ control, name: 'startDate' });
-  const watchStartTime = useWatch({ control, name: 'startTime' });
-  const watchEndDate = useWatch({ control, name: 'endDate' });
-  const watchEndTime = useWatch({ control, name: 'endTime' });
+  const entryFee        = Number(useWatch({ control, name: 'entryFee' }) || 0);
+  const maxParticipants = Number(useWatch({ control, name: 'maxParticipants' }) || 16);
+  const prizePool       = Number(useWatch({ control, name: 'prizePool' }) || 0);
+  const isFree          = entryFee === 0;
+  const prizePerWinner  = prizePool > 0 ? Math.floor(prizePool / Math.ceil(Math.log2(maxParticipants))) : 0;
 
-  const suggestedPrizePool = (Number(watchEntryFee) || 0) * (Number(watchMaxParticipants) || 0);
-
-  const onSubmit = async (formData) => {
+  const onSubmit = async (data) => {
     setSubmitting(true);
     const result = await createTournament({
-      ...formData,
-      startDate: combineDateAndTime(formData.startDate, formData.startTime),
-      endDate: formData.endDate && formData.endTime
-        ? combineDateAndTime(formData.endDate, formData.endTime)
-        : '',
+      title: data.title,
+      game: data.game,
+      format: data.format,
+      description: data.description,
+      entryFee: Number(data.entryFee),
+      prizePool: Number(data.prizePool),
+      maxParticipants: Number(data.maxParticipants),
+      startDate: `${data.startDate}T${data.startTime}`,
+      endDate: `${data.endDate}T${data.endTime}`,
+      college: user?.college,
     });
     setSubmitting(false);
-
-    if (result.success && result.data?._id) {
-      navigate(`/tournaments/${result.data._id}`);
-    }
+    if (result?.success) navigate('/tournaments');
   };
 
   return (
-    <div className="min-h-screen bg-grid pt-24 pb-12 px-4 sm:px-6">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <AppShell>
+      {/* Top bar */}
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-wine-elevated flex-shrink-0">
         <button
           onClick={() => navigate('/tournaments')}
-          className="flex items-center gap-2 text-text-muted hover:text-text-primary text-sm transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg bg-wine-card border border-wine-elevated text-white/50 hover:text-white hover:border-crimson/50 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Back to Tournaments
+          <ArrowLeft className="w-4 h-4" />
         </button>
-
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold">
-            Host a <span className="gradient-text">Tournament</span>
-          </h1>
-          <p className="text-text-muted text-sm mt-1">
-            Simple setup form for a classroom-friendly frontend flow.
-          </p>
+          <h1 className="text-white font-bold text-lg">Create Tournament</h1>
+          <p className="text-white/40 text-xs">Set up a campus championship</p>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-bg-card border border-white/10 rounded-2xl p-6 sm:p-8 space-y-5"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <Trophy className="w-5 h-5 text-warning" />
-              <h2 className="font-display font-semibold text-lg">Tournament Details</h2>
-            </div>
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="max-w-lg mx-auto">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-            <Input
-              label="Tournament Title"
-              placeholder="e.g. Campus Valorant Knockout"
-              error={errors.title?.message}
-              {...register('title', {
-                required: 'Title is required',
-                minLength: { value: 5, message: 'At least 5 characters' },
-              })}
-            />
+            {/* ── BASICS ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-wine-card border border-purple-500/20 rounded-2xl p-6 space-y-4"
+            >
+              <SectionDivider title="Basics" />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">Game *</label>
-                <select
-                  className={`bg-bg-elevated border rounded-lg px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/40 ${errors.game ? 'border-error' : 'border-white/10'}`}
-                  {...register('game', { required: 'Select a game' })}
-                >
-                  <option value="">Select a game</option>
-                  {GAMES.map((game) => (
-                    <option key={game} value={game}>{game}</option>
-                  ))}
-                </select>
-                {errors.game && <p className="text-xs text-error">{errors.game.message}</p>}
+              <div>
+                <label className="text-white/50 text-xs font-medium mb-1.5 block">Tournament Title</label>
+                <input
+                  {...register('title', { required: 'Title is required' })}
+                  placeholder="BITS Invitational — Season 1"
+                  className={inputClass(errors.title)}
+                />
+                {errors.title && <p className="text-error text-xs mt-1">{errors.title.message}</p>}
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-text-secondary">Format *</label>
-                <select
-                  className="bg-bg-elevated border border-white/10 rounded-lg px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-purple-500/40"
-                  {...register('format')}
-                >
-                  {TOURNAMENT_FORMATS.map((format) => (
-                    <option key={format.value} value={format.value}>{format.label}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">Game</label>
+                  <select
+                    {...register('game', { required: 'Select a game' })}
+                    className={`${inputClass(errors.game)} appearance-none`}
+                  >
+                    <option value="" className="bg-wine-card">Select game...</option>
+                    {GAMES.map(g => <option key={g} value={g} className="bg-wine-card">{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">Format</label>
+                  <select {...register('format')} className={`${inputClass(false)} appearance-none`}>
+                    {TOURNAMENT_FORMATS.map(f => (
+                      <option key={f.value} value={f.value} className="bg-wine-card">{f.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Input
-                label="Entry Fee"
-                type="number"
-                icon={Zap}
-                error={errors.entryFee?.message}
-                {...register('entryFee', {
-                  required: 'Entry fee is required',
-                  min: { value: 0, message: 'Minimum 0 credits' },
-                })}
-              />
-
-              <Input
-                label="Prize Pool"
-                type="number"
-                icon={Trophy}
-                error={errors.prizePool?.message}
-                {...register('prizePool', {
-                  required: 'Prize pool is required',
-                  min: { value: 0, message: 'Minimum 0 credits' },
-                })}
-              />
-
-              <Input
-                label="Max Participants"
-                type="number"
-                icon={Users}
-                error={errors.maxParticipants?.message}
-                {...register('maxParticipants', {
-                  required: 'Participant limit is required',
-                  min: { value: 2, message: 'Minimum 2 participants' },
-                  max: { value: 64, message: 'Maximum 64 participants' },
-                })}
-              />
-            </div>
-
-            <div className="bg-bg-elevated rounded-xl p-4 text-sm text-text-muted">
-              Suggested full pot: <span className="text-cyan-400 font-semibold">{suggestedPrizePool} ⚡</span>
-              {' '}based on current entry fee and participant count.
-              {' '}Current prize pool: <span className="text-success font-semibold">{watchPrizePool || 0} ⚡</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <DateTimeField
-                label="Start Date & Time"
-                required
-                dateValue={watchStartDate || ''}
-                timeValue={watchStartTime || ''}
-                onDateChange={(value) => setValue('startDate', value, { shouldValidate: true })}
-                onTimeChange={(value) => setValue('startTime', value, { shouldValidate: true })}
-                dateError={errors.startDate?.message}
-                timeError={errors.startTime?.message}
-              />
-
-              <DateTimeField
-                label="End Date & Time"
-                dateValue={watchEndDate || ''}
-                timeValue={watchEndTime || ''}
-                onDateChange={(value) => setValue('endDate', value)}
-                onTimeChange={(value) => setValue('endTime', value)}
-                dateError={errors.endDate?.message}
-                timeError={errors.endTime?.message}
-              />
-            </div>
-
-            <input type="hidden" {...register('startDate', { required: 'Select a date' })} />
-            <input type="hidden" {...register('startTime', { required: 'Select a time' })} />
-            <input type="hidden" {...register('endDate')} />
-            <input type="hidden" {...register('endTime')} />
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-text-secondary">Rules</label>
-              <div className="relative">
-                <FileText className="w-4 h-4 text-text-muted absolute left-3 top-3.5" />
+              <div>
+                <label className="text-white/50 text-xs font-medium mb-1.5 block">Description</label>
                 <textarea
-                  rows={5}
-                  placeholder="Explain the rules in plain language. Example: single elimination, screenshot proof required, 10 minute grace period."
-                  className="w-full bg-bg-elevated border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-purple-500/40 resize-none"
-                  {...register('rules')}
+                  {...register('description')}
+                  rows={3}
+                  placeholder="Describe the tournament, rules, platform requirements..."
+                  className="w-full bg-wine-elevated border border-wine-card focus:border-crimson/50 rounded-xl px-4 py-3 text-white text-sm outline-none transition-colors resize-none"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex gap-3 pt-2">
-              <Button variant="ghost" type="button" onClick={() => navigate('/tournaments')} className="flex-1">
-                Cancel
-              </Button>
-              <Button variant="primary" type="submit" loading={submitting} icon={Trophy} className="flex-1">
-                Create Tournament
-              </Button>
-            </div>
-          </motion.div>
-        </form>
+            {/* ── CREDITS ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="bg-wine-card border border-credits/15 rounded-2xl p-6 space-y-4"
+            >
+              <SectionDivider title="Credits & Participants" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">Entry Fee (⚡)</label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-wine-elevated border border-wine-card focus-within:border-credits/40 rounded-xl transition-colors">
+                    <Zap className="w-4 h-4 text-credits flex-shrink-0" />
+                    <input
+                      type="number"
+                      min="0"
+                      {...register('entryFee')}
+                      className="flex-1 bg-transparent text-white text-sm outline-none"
+                    />
+                  </div>
+                  {isFree && (
+                    <p className="text-success text-[10px] mt-1 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Free Entry
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">Prize Pool (⚡)</label>
+                  <div className="flex items-center gap-2 px-4 py-3 bg-wine-elevated border border-wine-card focus-within:border-credits/40 rounded-xl transition-colors">
+                    <Trophy className="w-4 h-4 text-credits flex-shrink-0" />
+                    <input
+                      type="number"
+                      min="0"
+                      {...register('prizePool')}
+                      className="flex-1 bg-transparent text-credits text-sm outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-white/50 text-xs font-medium mb-1.5 block">Max Participants</label>
+                <select {...register('maxParticipants')} className={`${inputClass(false)} appearance-none`}>
+                  {[8, 16, 32, 64].map(n => (
+                    <option key={n} value={n} className="bg-wine-card">{n} players</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Live calculation */}
+              {prizePool > 0 && (
+                <div className="flex items-center gap-3 px-4 py-3 bg-credits/10 border border-credits/20 rounded-xl">
+                  <Zap className="w-4 h-4 text-credits flex-shrink-0" />
+                  <p className="text-credits text-xs">
+                    Expected prize per match winner: <span className="font-bold">{prizePerWinner} ⚡</span>
+                  </p>
+                </div>
+              )}
+            </motion.div>
+
+            {/* ── SCHEDULE ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-wine-card border border-wine-elevated rounded-2xl p-6 space-y-4"
+            >
+              <SectionDivider title="Schedule" />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">Start Date</label>
+                  <input
+                    type="date"
+                    {...register('startDate', { required: true })}
+                    className={inputClass(errors.startDate)}
+                    style={{ colorScheme: 'dark' }}
+                  />
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">Start Time</label>
+                  <input
+                    type="time"
+                    {...register('startTime', { required: true })}
+                    className={inputClass(errors.startTime)}
+                    style={{ colorScheme: 'dark' }}
+                  />
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">End Date</label>
+                  <input
+                    type="date"
+                    {...register('endDate', { required: true })}
+                    className={inputClass(errors.endDate)}
+                    style={{ colorScheme: 'dark' }}
+                  />
+                </div>
+                <div>
+                  <label className="text-white/50 text-xs font-medium mb-1.5 block">End Time</label>
+                  <input
+                    type="time"
+                    {...register('endTime', { required: true })}
+                    className={inputClass(errors.endTime)}
+                    style={{ colorScheme: 'dark' }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-gradient-to-r from-crimson to-purple-600 hover:from-crimson-light hover:to-purple-500 rounded-xl text-white font-semibold text-sm transition-all shadow-glow-crimson-sm disabled:opacity-60"
+            >
+              <Trophy className="w-5 h-5" />
+              {submitting ? 'Creating Tournament...' : 'Create Tournament 🏆'}
+            </button>
+
+            <p className="text-center text-white/20 text-xs pb-4">
+              No real money involved · Campus credits only
+            </p>
+          </form>
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
-};
-
-export default CreateTournament;
+}

@@ -1,119 +1,156 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Zap, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { Zap, TrendingUp, TrendingDown, Trophy, Gamepad2 } from 'lucide-react';
+import AppShell from '../components/layout/AppShell';
 import useAuth from '../hooks/useAuth';
 import useMyMatches from '../hooks/useMyMatches';
-import { formatCreditChange, timeFromNow } from '../utils/formatters';
+import { timeFromNow, calcWinRate } from '../utils/formatters';
 
-const Wallet = () => {
-  const { user } = useAuth();
-  const { matches, isLoading } = useMyMatches();
+function StatCard({ label, value, icon: Icon, colorClass }) {
+  return (
+    <div className="bg-wine-card border border-wine-elevated rounded-2xl p-5 flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-xl ${colorClass.replace('text-', 'bg-').replace('-400', '/15').replace('-500', '/15')} flex items-center justify-center flex-shrink-0`}>
+        <Icon className={`w-5 h-5 ${colorClass}`} />
+      </div>
+      <div>
+        <p className="text-white/40 text-xs">{label}</p>
+        <p className={`font-bold text-xl ${colorClass}`}>{value}</p>
+      </div>
+    </div>
+  );
+}
 
-  // Build transactions purely from real Supabase match data
-  const transactions = matches.map((m) => ({
-    _id: m._id,
-    type: m.result === 'won' ? 'credit' : 'debit',
-    label: `${m.game} vs ${m.opponent?.name || 'Unknown'}`,
-    amount: m.creditsChange,
-    date: m.date,
-  })).sort((a, b) => new Date(b.date) - new Date(a.date));
+export default function Wallet() {
+  const { user }                     = useAuth();
+  const { matches, isLoading }       = useMyMatches();
+  const [page, setPage]              = useState(8);
 
-  const totalWon = transactions.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0);
-  const totalSpent = transactions.filter(t => t.type === 'debit').reduce((s, t) => s + Math.abs(t.amount), 0);
+  const won  = matches.filter(m => m.result === 'won').reduce((s, m) => s + (m.creditsChange || 0), 0);
+  const lost = matches.filter(m => m.result === 'lost').reduce((s, m) => s + Math.abs(m.creditsChange || 0), 0);
+
+  const txRows = matches.slice(0, page);
+  const hasMore = matches.length > page;
+
+  function txIcon(result) {
+    if (result === 'won')    return { icon: Trophy, bg: 'bg-credits/15', color: 'text-credits' };
+    if (result === 'lost')   return { icon: Zap,    bg: 'bg-error/15',   color: 'text-error'   };
+    return                          { icon: Gamepad2,bg: 'bg-purple-500/15', color: 'text-purple-400' };
+  }
 
   return (
-    <div className="min-h-screen bg-grid pt-24 pb-12 px-4 sm:px-6">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold">
-            <span className="gradient-text">Wallet</span>
-          </h1>
-          <p className="text-text-muted text-sm mt-1">Campus credits — virtual currency only</p>
-        </div>
+    <AppShell>
+      {/* Top bar */}
+      <div className="px-6 py-4 border-b border-wine-elevated flex-shrink-0">
+        <h1 className="text-white font-bold text-lg flex items-center gap-2">
+          <Zap className="w-5 h-5 text-credits" /> Wallet
+        </h1>
+        <p className="text-white/40 text-xs">Campus credits — no real money</p>
+      </div>
 
-        {/* Balance card */}
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+        {/* ── BALANCE HERO ── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative bg-bg-card border border-purple-500/20 rounded-2xl overflow-hidden p-8"
+          className="bg-wine-card border border-credits/20 rounded-2xl p-8 text-center relative overflow-hidden"
         >
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-cyan-500" />
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="relative z-10">
-            <p className="text-text-muted text-sm mb-2">Current Balance</p>
-            <div className="flex items-end gap-3 mb-6">
-              <span className="font-display text-5xl font-black gradient-text">{(user?.credits || 0).toLocaleString('en-IN')}</span>
-              <span className="text-2xl font-bold text-cyan-400 mb-1">⚡</span>
+          {/* Glow blob */}
+          <div className="absolute inset-0 bg-credits-glow pointer-events-none" />
+          <Zap className="w-10 h-10 text-credits mx-auto mb-3 opacity-80" />
+          <p className="text-white/50 text-sm mb-1">Current Balance</p>
+          <p className="text-credits font-bold text-5xl font-display">{user?.credits || 0} ⚡</p>
+          <p className="text-white/30 text-xs mt-2">Campus credits only · No real money involved</p>
+
+          {/* Mini stats */}
+          <div className="flex gap-4 mt-6">
+            <div className="flex-1 bg-success/10 border border-success/20 rounded-xl p-4">
+              <TrendingUp className="w-4 h-4 text-success mx-auto mb-1" />
+              <p className="text-success font-bold text-lg">+{won} ⚡</p>
+              <p className="text-white/40 text-xs">Total Earned</p>
             </div>
-            <div className="flex gap-6">
-              {[
-                { label: 'Total Won', value: `+${totalWon}`, color: 'text-success', icon: TrendingUp },
-                { label: 'Total Bid', value: `-${totalSpent}`, color: 'text-error', icon: TrendingDown },
-              ].map(({ label, value, color, icon: Icon }) => (
-                <div key={label}>
-                  <p className="text-xs text-text-muted mb-0.5">{label}</p>
-                  <div className="flex items-center gap-1.5">
-                    <Icon className={`w-3.5 h-3.5 ${color}`} />
-                    <span className={`font-display font-bold ${color}`}>{value} ⚡</span>
-                  </div>
-                </div>
-              ))}
+            <div className="flex-1 bg-error/10 border border-error/20 rounded-xl p-4">
+              <TrendingDown className="w-4 h-4 text-error mx-auto mb-1" />
+              <p className="text-error font-bold text-lg">-{lost} ⚡</p>
+              <p className="text-white/40 text-xs">Total Spent</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Info banner */}
-        <div className="bg-bg-elevated border border-white/5 rounded-xl p-4 flex items-start gap-3">
-          <Zap className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-text-muted leading-relaxed">
-            Campus credits are <strong className="text-text-secondary">virtual currency</strong> with no monetary value.
-            They can only be used within CampusArena to join matches and tournaments. Credits are earned by winning matches and cannot be withdrawn or exchanged for real money.
-          </p>
+        {/* ── STAT CARDS ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard label="Total Matches"  value={user?.stats?.matchesPlayed || 0}  icon={Gamepad2}    colorClass="text-purple-400" />
+          <StatCard label="Matches Won"    value={user?.stats?.matchesWon    || 0}  icon={Trophy}      colorClass="text-credits"    />
+          <StatCard label="Win Rate"       value={calcWinRate(user?.stats?.matchesWon, user?.stats?.matchesPlayed)} icon={TrendingUp} colorClass="text-success" />
+          <StatCard label="Total Credits"  value={`${user?.credits || 0} ⚡`}       icon={Zap}         colorClass="text-crimson"    />
         </div>
 
-        {/* Transaction history */}
-        <div className="bg-bg-card border border-white/5 rounded-2xl overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/5">
-            <h2 className="font-display font-semibold">Transaction History</h2>
+        {/* ── TRANSACTION LIST ── */}
+        <div className="bg-wine-card border border-wine-elevated rounded-2xl overflow-hidden">
+          <div className="px-5 py-4 border-b border-wine-elevated">
+            <h2 className="text-white font-semibold text-sm">Transactions</h2>
           </div>
-          <div className="divide-y divide-white/5">
-            {isLoading ? (
-              <div className="flex justify-center py-6"><div className="w-6 h-6 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" /></div>
-            ) : transactions.length === 0 ? (
-              <div className="py-8 text-center text-text-muted text-sm">No transactions yet</div>
-            ) : (
-              transactions.map((txn, i) => {
-                const isCredit = txn.type === 'credit';
+
+          {isLoading ? (
+            <div className="p-5 space-y-3">
+              {Array(5).fill(0).map((_, i) => <div key={i} className="h-14 bg-wine-elevated animate-pulse rounded-xl" />)}
+            </div>
+          ) : matches.length === 0 ? (
+            <div className="p-10 text-center text-white/30 text-sm">No transactions yet</div>
+          ) : (
+            <div>
+              {txRows.map((match, i) => {
+                const { icon: Icon, bg, color } = txIcon(match.result);
+                const isCredit = match.creditsChange > 0;
                 return (
                   <motion.div
-                    key={txn._id}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="flex items-center gap-4 px-5 py-4 hover:bg-white/3 transition-colors"
+                    key={match._id || i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    className={`flex items-center gap-4 px-5 py-4 border-b border-wine-elevated last:border-0 hover:bg-wine-elevated transition-colors
+                      ${isCredit ? 'border-l-2 border-l-success' : match.result === 'lost' ? 'border-l-2 border-l-error' : ''}`}
                   >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isCredit ? 'bg-success/10' : 'bg-error/10'}`}>
-                      {isCredit
-                        ? <ArrowDownLeft className="w-4 h-4 text-success" />
-                        : <ArrowUpRight className="w-4 h-4 text-error" />
-                      }
+                    <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center flex-shrink-0`}>
+                      <Icon className={`w-5 h-5 ${color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">{txn.label}</p>
-                      <p className="text-xs text-text-muted">{timeFromNow(txn.date)}</p>
+                      <p className="text-white font-semibold text-sm truncate">{match.title}</p>
+                      <p className="text-white/40 text-xs">Match result · {match.result || 'Pending'}</p>
                     </div>
-                    <span className={`text-sm font-bold font-display flex-shrink-0 ${isCredit ? 'text-success' : 'text-error'}`}>
-                      {formatCreditChange(txn.amount)}
-                    </span>
+                    <div className="text-right flex-shrink-0">
+                      <p className={`font-bold text-sm ${isCredit ? 'text-success' : match.creditsChange < 0 ? 'text-error' : 'text-white/40'}`}>
+                        {match.creditsChange > 0 ? '+' : ''}{match.creditsChange || 0} ⚡
+                      </p>
+                      <p className="text-white/30 text-[10px]">{timeFromNow(match.date)}</p>
+                    </div>
                   </motion.div>
                 );
-              })
-            )}
+              })}
+              {hasMore && (
+                <div className="p-4 text-center">
+                  <button
+                    onClick={() => setPage(p => p + 8)}
+                    className="text-crimson text-sm hover:text-crimson-light transition-colors"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Info box */}
+        <div className="bg-wine-elevated border border-wine-card rounded-xl p-4 flex gap-3">
+          <Zap className="w-4 h-4 text-credits mt-0.5 flex-shrink-0" />
+          <div className="text-white/40 text-xs space-y-1">
+            <p>• Credits are virtual campus tokens — never real money</p>
+            <p>• Credits are earned by winning skill-based matches</p>
+            <p>• Credits cannot be redeemed for cash or transferred outside the platform</p>
           </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
-};
-
-export default Wallet;
+}

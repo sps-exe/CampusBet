@@ -35,7 +35,8 @@ const useAuthStore = create(
       isLoading: false,
 
       // Sign in with email + password, then fetch the user's profile row
-      login: async (email, password) => {
+      // Called as login({ email, password }) from Login.jsx
+      login: async ({ email, password }) => {
         set({ isLoading: true });
         try {
           const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -126,6 +127,25 @@ const useAuthStore = create(
       updateUser: (updates) => set((s) => ({ user: { ...s.user, ...updates } })),
       deductCredits: (amount) => set((s) => ({ user: { ...s.user, credits: (s.user?.credits || 0) - amount } })),
       addCredits: (amount) => set((s) => ({ user: { ...s.user, credits: (s.user?.credits || 0) + amount } })),
+
+      // Update profile name/college in Supabase + local state
+      updateProfile: async ({ name, college }) => {
+        const state = useAuthStore.getState();
+        if (!state.user?._id) return { success: false };
+        try {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ name, college })
+            .eq('id', state.user._id);
+          if (error) throw error;
+          set((s) => ({ user: { ...s.user, name, college } }));
+          toast.success('Profile updated!');
+          return { success: true };
+        } catch (err) {
+          toast.error(err.message || 'Update failed');
+          return { success: false, message: err.message };
+        }
+      },
     }),
     {
       name: 'campusarena-auth', // localStorage key

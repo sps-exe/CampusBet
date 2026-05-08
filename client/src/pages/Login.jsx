@@ -1,115 +1,118 @@
 import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { Zap, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Zap, AlertCircle } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
 
-const Login = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [apiError, setApiError] = useState('');
-  const from = location.state?.from?.pathname || '/dashboard';
+export default function Login() {
+  const navigate              = useNavigate();
+  const { login, isLoading }  = useAuth();
+  const [email,    setEmail]  = useState('');
+  const [password, setPass]   = useState('');
+  const [showPw,   setShowPw] = useState(false);
+  const [error,    setError]  = useState('');
 
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
-
-  const onSubmit = async (data) => {
-    setApiError('');
-    const result = await login(data.email, data.password);
-    if (result.success) {
-      navigate(from, { replace: true });
-    } else {
-      setApiError(result.message || 'Invalid credentials. Try demo@college.edu / password');
-    }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    const res = await login({ email, password });
+    if (res?.success) navigate('/dashboard');
+    else setError(res?.message || 'Invalid email or password');
   };
 
   return (
-    <div className="min-h-screen bg-grid flex items-center justify-center p-4">
-      {/* Background glows */}
-      <div className="absolute top-1/4 left-1/3 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/3 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-wine-main bg-wine-grid flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background glow blobs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-crimson/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-credits/6 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-md relative z-10"
+        className="w-full max-w-sm"
       >
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <Link to="/" className="flex items-center gap-2 font-display font-bold text-2xl mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shadow-glow-purple">
-              <Zap className="w-5 h-5 text-white" />
+        {/* Card */}
+        <div className="bg-wine-card border border-crimson/20 rounded-2xl p-8 shadow-card-lg">
+          {/* Logo */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-crimson to-credits flex items-center justify-center mb-3 shadow-glow-crimson-sm">
+              <Zap className="w-7 h-7 text-white" />
             </div>
-            <span className="gradient-text">CampusArena</span>
-          </Link>
-          <p className="text-text-muted text-sm">Welcome back, champion</p>
-        </div>
+            <h1 className="text-white font-bold text-xl font-display">CampusArena</h1>
+            <p className="text-white/40 text-sm mt-1">Welcome back, champion</p>
+          </div>
 
-        <div className="bg-bg-card border border-white/10 rounded-2xl p-8 shadow-2xl">
-          <h1 className="font-display text-xl font-bold text-text-primary mb-6">Log in</h1>
-
-          {apiError && (
-            <div className="mb-4 px-4 py-3 bg-error/10 border border-error/30 rounded-xl text-sm text-error">
-              {apiError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="College Email"
-              type="email"
-              placeholder="you@college.edu"
-              icon={Mail}
-              error={errors.email?.message}
-              {...register('email', {
-                required: 'Email is required',
-                pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email' },
-              })}
-            />
-
-            <div className="relative">
-              <Input
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                icon={Lock}
-                error={errors.password?.message}
-                {...register('password', {
-                  required: 'Password is required',
-                  minLength: { value: 6, message: 'Minimum 6 characters' },
-                })}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-8 text-text-muted hover:text-text-primary transition-colors"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Error */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 px-4 py-3 bg-error/10 border border-error/30 rounded-xl text-error text-sm"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                {error}
+              </motion.div>
+            )}
+
+            {/* Email */}
+            <div>
+              <label className="text-white/50 text-xs font-medium mb-1.5 block">College Email</label>
+              <div className="flex items-center gap-3 px-4 py-3 bg-wine-elevated border border-wine-card focus-within:border-crimson/50 rounded-xl transition-colors">
+                <Mail className="w-4 h-4 text-white/30 flex-shrink-0" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="you@college.edu"
+                  required
+                  className="flex-1 bg-transparent text-white text-sm placeholder-white/25 outline-none"
+                />
+              </div>
             </div>
 
-            <Button type="submit" variant="primary" fullWidth loading={isSubmitting} className="mt-2" icon={ArrowRight}>
-              Log in
-            </Button>
+            {/* Password */}
+            <div>
+              <label className="text-white/50 text-xs font-medium mb-1.5 block">Password</label>
+              <div className="flex items-center gap-3 px-4 py-3 bg-wine-elevated border border-wine-card focus-within:border-crimson/50 rounded-xl transition-colors">
+                <Lock className="w-4 h-4 text-white/30 flex-shrink-0" />
+                <input
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPass(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="flex-1 bg-transparent text-white text-sm placeholder-white/25 outline-none"
+                />
+                <button type="button" onClick={() => setShowPw(v => !v)} className="text-white/30 hover:text-white/60 transition-colors">
+                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-crimson hover:bg-crimson-light rounded-xl text-white font-semibold text-sm transition-all shadow-glow-crimson-sm hover:shadow-glow-crimson disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <><Zap className="w-4 h-4 text-credits" /> Log in →</>
+              )}
+            </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-white/5 text-center">
-            <p className="text-text-muted text-sm">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-purple-400 hover:text-purple-300 font-medium">
-                Sign up free
-              </Link>
-            </p>
-          </div>
+          <p className="text-center text-white/30 text-xs mt-6">
+            Don't have an account?{' '}
+            <Link to="/signup" className="text-crimson hover:text-crimson-light transition-colors font-semibold">
+              Sign up free
+            </Link>
+          </p>
         </div>
       </motion.div>
     </div>
   );
-};
-
-export default Login;
+}

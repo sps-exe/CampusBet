@@ -13,6 +13,7 @@ const useAuth = () => {
   const updateUser     = useAuthStore((s) => s.updateUser);
   const deductCredits  = useAuthStore((s) => s.deductCredits);
   const addCredits     = useAuthStore((s) => s.addCredits);
+  const updateProfile  = useAuthStore((s) => s.updateProfile);
 
   // Derived flags based on the user's role field in the DB
   const isHost  = user?.role === 'host' || user?.role === 'admin';
@@ -22,7 +23,7 @@ const useAuth = () => {
     user, isAuthenticated, isLoading,
     isHost, isAdmin,
     login, signup, logout, loadUser,
-    updateUser, deductCredits, addCredits,
+    updateUser, deductCredits, addCredits, updateProfile,
   };
 };
 

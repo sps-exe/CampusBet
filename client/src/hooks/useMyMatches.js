@@ -30,14 +30,14 @@ const useMyMatches = () => {
           .eq('user_id', user._id);
 
         if (playerError) throw playerError;
-        if (!lobbyPlayers?.length) { setMatches([]); return; }
+        if (!lobbyPlayers?.length) { setMatches([]); setIsLoading(false); return; }
 
         const lobbyIds = lobbyPlayers.map((p) => p.lobby_id);
 
         // Step 2: fetch only completed lobbies from that set, with opponent name
         const { data: completedLobbies, error: lobbiesError } = await supabase
           .from('lobbies')
-          .select('*, lobby_players(user_id, profiles(name, avatar_url))')
+          .select('id, title, game, bid_amount, winner_id, created_at, lobby_players(user_id, profiles(name, avatar_url))')
           .in('id', lobbyIds)
           .eq('status', 'completed')
           .order('created_at', { ascending: false });
@@ -56,6 +56,7 @@ const useMyMatches = () => {
 
           return {
             _id: lobby.id,
+            title: lobby.title || `${lobby.game} Match`, // MatchRow reads this
             game: lobby.game,
             opponent: { name: opponentLabel, avatarUrl: primaryOpponent.avatar_url },
             result: isWinner ? 'won' : 'lost',
@@ -79,7 +80,7 @@ const useMyMatches = () => {
     return () => {
       isCancelled = true;
     };
-  }, [user]);
+  }, [user?._id]); // stable primitive — prevents infinite re-fetch
 
   return { matches, isLoading };
 };
