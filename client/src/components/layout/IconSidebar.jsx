@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Gamepad2, Trophy, TrendingUp,
-  Wallet, MessageCircle, Plus, Zap,
+  Wallet, MessageCircle, Plus, Zap, LogOut
 } from 'lucide-react';
 import useAuth from '../../hooks/useAuth';
 import { getInitials } from '../../utils/formatters';
@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 ];
 
 export default function IconSidebar() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -70,6 +70,19 @@ export default function IconSidebar() {
         className="w-10 h-10 rounded-xl border border-dashed border-crimson/50 flex items-center justify-center text-crimson hover:bg-crimson hover:text-white hover:border-crimson transition-all duration-200 mb-2"
       >
         <Plus className="w-4 h-4" />
+      </button>
+
+      {/* Log out button */}
+      <button
+        onClick={() => logout()}
+        title="Log Out"
+        className="w-10 h-10 rounded-xl flex items-center justify-center text-white/30 hover:text-error hover:bg-wine-elevated transition-all duration-200 mb-2 group relative"
+      >
+        <LogOut className="w-4 h-4" />
+        {/* Tooltip */}
+        <span className="absolute left-full ml-3 px-2 py-1 bg-wine-card text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 border border-wine-elevated transition-opacity">
+          Log Out
+        </span>
       </button>
 
       {/* User avatar */}
