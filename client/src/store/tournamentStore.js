@@ -166,7 +166,7 @@ const useTournamentStore = create((set, get) => ({
 
       const { data: tournament, error: tournamentError } = await supabase
         .from('tournaments')
-        .select('id, status, max_participants, tournament_participants(user_id)')
+        .select('id, status, max_participants, entry_fee, tournament_participants(user_id)')
         .eq('id', tournamentId)
         .single();
 
@@ -183,6 +183,14 @@ const useTournamentStore = create((set, get) => ({
         throw new Error('This tournament is already full');
       }
 
+      const entryFee = tournament.entry_fee || 0;
+      if (entryFee > 0) {
+        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.user.id).single();
+        if (!profile || profile.credits < entryFee) {
+          throw new Error('Insufficient credits to register');
+        }
+      }
+
       const { error } = await supabase.from('tournament_participants').insert({
         tournament_id: tournamentId,
         user_id: session.user.id,
@@ -191,6 +199,14 @@ const useTournamentStore = create((set, get) => ({
       if (error) {
         if (error.code === '23505') throw new Error('You are already registered!');
         throw error;
+      }
+
+      // Deduct entry fee
+      if (entryFee > 0) {
+        const { data: profile } = await supabase.from('profiles').select('credits').eq('id', session.user.id).single();
+        if (profile) {
+          await supabase.from('profiles').update({ credits: profile.credits - entryFee }).eq('id', session.user.id);
+        }
       }
 
       toast.success('Registered for tournament! 🏆');

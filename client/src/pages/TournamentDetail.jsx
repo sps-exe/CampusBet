@@ -95,8 +95,8 @@ export default function TournamentDetail() {
     </AppShell>
   );
 
-  const isRegistered = t.registrations?.some(r => r.userId === user?._id);
-  const spotsLeft    = (t.maxParticipants || 0) - (t.registrations?.length || 0);
+  const isRegistered = t.participants?.includes(user?._id);
+  const spotsLeft    = (t.maxParticipants || 0) - (t.participants?.length || 0);
   const isFull       = spotsLeft <= 0;
   const isFree       = !t.entryFee || t.entryFee === 0;
 
@@ -113,12 +113,12 @@ export default function TournamentDetail() {
   };
 
   // Build bracket pairs from registrations
-  const participants = t.registrations || [];
+  const participants = t.resolvedParticipants || [];
   const bracketPairs = [];
   for (let i = 0; i < participants.length; i += 2) {
     bracketPairs.push([
-      participants[i]?.profiles?.name || `Player ${i+1}`,
-      participants[i+1]?.profiles?.name || `Player ${i+2}`,
+      participants[i]?.name || `Player ${i+1}`,
+      participants[i+1]?.name || `Player ${i+2}`,
     ]);
   }
 
@@ -182,7 +182,7 @@ export default function TournamentDetail() {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <StatBox icon={Zap}      label="Entry Fee"     value={isFree ? 'Free' : formatCredits(t.entryFee)}        color="text-credits"     />
               <StatBox icon={Trophy}   label="Prize Pool"    value={formatCredits(t.prizePool)}                         color="text-credits"     />
-              <StatBox icon={Users}    label="Participants"  value={`${t.registrations?.length || 0}/${t.maxParticipants}`} color="text-purple-400" />
+              <StatBox icon={Users}    label="Participants"  value={`${t.participants?.length || 0}/${t.maxParticipants}`} color="text-purple-400" />
               <StatBox icon={Calendar} label="Starts"        value={formatDateTime(t.startDate)}                        color="text-white/60"    />
               <StatBox icon={Calendar} label="Ends"          value={formatDateTime(t.endDate)}                          color="text-white/60"    />
             </div>
@@ -272,17 +272,17 @@ export default function TournamentDetail() {
         {tab === 'Participants' && (
           <div className="bg-wine-card border border-wine-elevated rounded-2xl p-5">
             <h3 className="text-white font-semibold text-sm mb-4">
-              Participants ({t.registrations?.length || 0}/{t.maxParticipants})
+              Participants ({t.participants?.length || 0}/{t.maxParticipants})
             </h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {Array.from({ length: t.maxParticipants || 8 }, (_, i) => {
-                const reg = t.registrations?.[i];
+                const reg = t.resolvedParticipants?.[i];
                 return reg ? (
                   <ParticipantCard
                     key={i}
                     index={i}
-                    name={reg.profiles?.name || `Player ${i+1}`}
-                    college={reg.profiles?.college || '—'}
+                    name={reg.name || `Player ${i+1}`}
+                    college={reg.college || '—'}
                   />
                 ) : (
                   <ParticipantCard key={i} index={i} empty />
