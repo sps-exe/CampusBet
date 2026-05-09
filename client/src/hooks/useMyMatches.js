@@ -30,21 +30,38 @@ const useMyMatches = () => {
           .eq('user_id', user._id);
 
         if (playerError) throw playerError;
-        if (!lobbyPlayers?.length) { setMatches([]); setIsLoading(false); return; }
-
-        const lobbyIds = lobbyPlayers.map((p) => p.lobby_id);
+        
+        const lobbyIds = lobbyPlayers?.map((p) => p.lobby_id) || [];
 
         // Step 2: fetch only completed lobbies from that set, with opponent name
-        const { data: completedLobbies, error: lobbiesError } = await supabase
-          .from('lobbies')
-          .select('id, title, game, bid_amount, winner_id, created_at, lobby_players(user_id, profiles(name, avatar_url))')
-          .in('id', lobbyIds)
-          .eq('status', 'completed')
-          .order('created_at', { ascending: false });
+        let completedLobbies = [];
+        if (lobbyIds.length > 0) {
+          const { data, error: lobbiesError } = await supabase
+            .from('lobbies')
+            .select('id, title, game, bid_amount, winner_id, created_at, lobby_players(user_id, profiles(name, avatar_url))')
+            .in('id', lobbyIds)
+            .eq('status', 'completed')
+            .order('created_at', { ascending: false });
+          if (lobbiesError) throw lobbiesError;
+          completedLobbies = data || [];
+        }
 
-        if (lobbiesError) throw lobbiesError;
+        // Step 3: Fetch Hosted Tournaments (Prize Pool Deductions)
+        const { data: hostedTournaments, error: hostErr } = await supabase
+          .from('tournaments')
+          .select('id, title, game, prize_pool, start_date')
+          .eq('host_id', user._id)
+          .gt('prize_pool', 0);
+        if (hostErr) throw hostErr;
 
-        // Step 3: shape each lobby into a clean match object
+        // Step 4: Fetch Participated Tournaments (Entry Fee Deductions)
+        const { data: partTournaments, error: partErr } = await supabase
+          .from('tournament_participants')
+          .select('tournaments(id, title, game, entry_fee, start_date)')
+          .eq('user_id', user._id);
+        if (partErr) throw partErr;
+
+        // Map Lobbies
         const mappedMatches = completedLobbies.map((lobby) => {
           const playerCount = lobby.lobby_players?.length || 2;
           const isWinner = lobby.winner_id === user._id;
@@ -67,7 +84,38 @@ const useMyMatches = () => {
           };
         });
 
-        if (!isCancelled) setMatches(mappedMatches);
+        // Map Hosted Tournaments
+        const mappedHosted = (hostedTournaments || []).map(t => ({
+          _id: t.id + '_host',
+          title: `Hosted: ${t.title || t.game}`,
+          game: t.game,
+          opponent: { name: 'Prize Pool Funding', avatarUrl: null },
+          result: 'spent', 
+          creditsChange: -t.prize_pool,
+          date: t.start_date, 
+        }));
+
+        // Map Participated Tournaments
+        const mappedPart = (partTournaments || [])
+          .filter(p => p.tournaments && p.tournaments.entry_fee > 0)
+          .map(p => {
+             const t = p.tournaments;
+             return {
+               _id: t.id + '_part',
+               title: `Registered: ${t.title || t.game}`,
+               game: t.game,
+               opponent: { name: 'Tournament Entry', avatarUrl: null },
+               result: 'spent',
+               creditsChange: -t.entry_fee,
+               date: t.start_date,
+             };
+          });
+
+        const allMatches = [...mappedMatches, ...mappedHosted, ...mappedPart];
+        // Sort by date descending
+        allMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (!isCancelled) setMatches(allMatches);
       } catch (err) {
         console.error('Failed to fetch matches:', err);
       } finally {

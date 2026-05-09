@@ -25,16 +25,16 @@ export default function Wallet() {
   const { matches, isLoading }       = useMyMatches();
   const [page, setPage]              = useState(8);
 
-  const won  = matches.filter(m => m.result === 'won').reduce((s, m) => s + (m.creditsChange || 0), 0);
-  const lost = matches.filter(m => m.result === 'lost').reduce((s, m) => s + Math.abs(m.creditsChange || 0), 0);
+  const won  = matches.filter(m => m.creditsChange > 0).reduce((s, m) => s + m.creditsChange, 0);
+  const lost = matches.filter(m => m.creditsChange < 0).reduce((s, m) => s + Math.abs(m.creditsChange), 0);
 
   const txRows = matches.slice(0, page);
   const hasMore = matches.length > page;
 
   function txIcon(result) {
-    if (result === 'won')    return { icon: Trophy, bg: 'bg-credits/15', color: 'text-credits' };
-    if (result === 'lost')   return { icon: Zap,    bg: 'bg-error/15',   color: 'text-error'   };
-    return                          { icon: Gamepad2,bg: 'bg-purple-500/15', color: 'text-purple-400' };
+    if (result === 'won')       return { icon: Trophy, bg: 'bg-credits/15', color: 'text-credits' };
+    if (result === 'lost' || result === 'spent') return { icon: Zap, bg: 'bg-error/15', color: 'text-error' };
+    return { icon: Gamepad2, bg: 'bg-purple-500/15', color: 'text-purple-400' };
   }
 
   return (
