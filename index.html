@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CampusBet Prototype Presentation</title>
+  <meta name="description" content="CampusBet prototype overview, architecture, tech stack, features, contributions, and future scope." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #111118;
+      --bg-card: #16161f;
+      --bg-elevated: #1c1c27;
+      --purple: #8b5cf6;
+      --purple-soft: #a78bfa;
+      --cyan: #06b6d4;
+      --cyan-soft: #22d3ee;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --text: #f4f4f5;
+      --text-secondary: #a1a1aa;
+      --text-muted: #52525b;
+      --border: rgba(255,255,255,0.08);
+      --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-purple: 0 0 20px rgba(139,92,246,0.38);
+      --shadow-cyan: 0 0 20px rgba(6,182,212,0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(139,92,246,0.22), transparent 28rem),
+        radial-gradient(circle at 88% 12%, rgba(6,182,212,0.18), transparent 25rem),
+        linear-gradient(135deg, #0a0a0f 0%, #13101f 50%, #0a0f1a 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.025' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(139,92,246,0.08), transparent 22%, transparent 78%, rgba(6,182,212,0.08)),
+        radial-gradient(circle at 50% 92%, rgba(139,92,246,0.18), transparent 34rem);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    h1, h2, h3 {
+      font-family: "Space Grotesk", Inter, sans-serif;
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .deck-shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 80px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 16px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: rgba(10,10,15,0.78);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow-card);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      white-space: nowrap;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--purple), var(--cyan));
+      box-shadow: var(--shadow-purple);
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, var(--purple-soft), var(--cyan-soft));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: 160ms ease;
+    }
+
+    .nav a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+      border-color: var(--border);
+    }
+
+    .slide {
+      min-height: min(820px, calc(100vh - 44px));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 26px;
+      padding: 70px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .slide:last-child {
+      border-bottom: 0;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 10px;
+      color: var(--purple-soft);
+      font-size: 14px;
+      font-weight: 800;
+      padding: 8px 14px;
+      border: 1px solid rgba(139,92,246,0.32);
+      border-radius: 999px;
+      background: rgba(139,92,246,0.10);
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+      gap: 28px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      max-width: 760px;
+      font-size: clamp(48px, 8vw, 104px);
+      line-height: 0.95;
+      font-weight: 800;
+    }
+
+    .hero p,
+    .lead {
+      color: var(--text-secondary);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.65;
+      max-width: 760px;
+    }
+
+    .hero-actions,
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 44px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      box-shadow: var(--shadow-card);
+    }
+
+    .button.primary {
+      border-color: transparent;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+      box-shadow: var(--shadow-purple);
+    }
+
+    .glass-card {
+      position: relative;
+      overflow: hidden;
+      background: rgba(22,22,31,0.84);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(10px);
+    }
+
+    .glass-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(140deg, rgba(255,255,255,0.07), transparent 34%),
+        radial-gradient(circle at 16% 8%, rgba(139,92,246,0.18), transparent 20rem),
+        radial-gradient(circle at 90% 16%, rgba(6,182,212,0.14), transparent 18rem);
+    }
+
+    .glass-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .product-card {
+      padding: 24px;
+    }
+
+    .mini-app {
+      display: grid;
+      gap: 16px;
+    }
+
+    .mini-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mini-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .mini-stat,
+    .feature-tile,
+    .stack-tile,
+    .contribution,
+    .scope-card {
+      background: rgba(28,28,39,0.78);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .mini-stat span,
+    .label {
+      color: var(--text-muted);
+      display: block;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .mini-stat strong {
+      display: block;
+      margin-top: 8px;
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 32px;
+      color: var(--cyan-soft);
+    }
+
+    .mini-lobby {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(10,10,15,0.62);
+      border: 1px solid rgba(139,92,246,0.24);
+    }
+
+    .progress {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 62%;
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+    }
+
+    .section-title {
+      display: grid;
+      gap: 12px;
+      max-width: 850px;
+    }
+
+    .section-title h2 {
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 1;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature-tile {
+      min-height: 180px;
+    }
+
+    .tile-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 18px;
+      border-radius: 13px;
+      background: rgba(139,92,246,0.12);
+      border: 1px solid rgba(139,92,246,0.24);
+      color: var(--purple-soft);
+      font-weight: 900;
+    }
+
+    .feature-tile h3,
+    .stack-tile h3,
+    .contribution h3,
+    .scope-card h3 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .feature-tile p,
+    .stack-tile p,
+    .contribution p,
+    .scope-card p,
+    .timeline-item p {
+      color: var(--text-secondary);
+      line-height: 1.58;
+      font-size: 14px;
+    }
+
+    .architecture {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .arch-box {
+      min-height: 160px;
+      display: grid;
+      align-content: center;
+      gap: 10px;
+      text-align: center;
+      padding: 22px;
+      border-radius: 18px;
+      background: rgba(22,22,31,0.88);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+
+    .arch-arrow {
+      color: var(--cyan-soft);
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .stack-tile {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      color: var(--text-secondary);
+      background: rgba(255,255,255,0.04);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 14px;
+      counter-reset: item;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(22,22,31,0.78);
+    }
+
+    .step-num {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(139,92,246,0.42), rgba(6,182,212,0.34));
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-weight: 800;
+    }
+
+    .schema {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .table-card {
+      min-height: 132px;
+      padding: 15px;
+      border-radius: 14px;
+      background: rgba(28,28,39,0.82);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .table-card h3 {
+      color: var(--cyan-soft);
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    .table-card p {
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .contribution strong {
+      display: inline-flex;
+      margin-bottom: 10px;
+      color: var(--cyan-soft);
+      font-family: "Space Grotesk", Inter, sans-serif;
+      font-size: 18px;
+    }
+
+    .footer-note {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .deck-controls {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 25;
+      display: flex;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(10,10,15,0.78);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow-card);
+    }
+
+    .deck-controls button {
+      width: 42px;
+      height: 38px;
+      border: 0;
+      border-radius: 10px;
+      color: var(--text);
+      background: rgba(255,255,255,0.07);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .deck-controls button:hover {
+      background: linear-gradient(90deg, var(--purple), var(--cyan));
+    }
+
+    @media (max-width: 900px) {
+      .topbar {
+        position: static;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .hero,
+      .grid-2,
+      .grid-3,
+      .architecture,
+      .schema {
+        grid-template-columns: 1fr;
+      }
+
+      .arch-arrow {
+        transform: rotate(90deg);
+        justify-self: center;
+      }
+
+      .slide {
+        min-height: auto;
+        padding: 52px 0;
+      }
+    }
+
+    @media print {
+      body {
+        background: #0a0a0f;
+      }
+
+      .topbar,
+      .deck-controls {
+        display: none;
+      }
+
+      .slide {
+        min-height: 100vh;
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck-shell">
+    <header class="topbar" aria-label="Presentation navigation">
+      <a class="brand" href="#cover" aria-label="CampusBet presentation cover">
+        <span class="brand-mark">⚡</span>
+        <span class="gradient-text">CampusBet</span>
+      </a>
+      <nav class="nav">
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#features">Features</a>
+        <a href="#stack">Stack</a>
+        <a href="#contributions">Contributions</a>
+        <a href="#future">Future Scope</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="slide hero" id="cover">
+        <div>
+          <span class="eyebrow"><span class="live-dot"></span> Prototype presentation</span>
+          <h1>Campus gaming, virtual credits, and skill-based competition.</h1>
+          <p class="lead">CampusBet is a React + Supabase prototype where students create lobbies, host tournaments, track virtual credits, and climb a campus leaderboard without real-money wagering.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#overview">Start presentation</a>
+            <a class="button" href="../README.md">Read project README</a>
+          </div>
+        </div>
+
+        <aside class="glass-card product-card" aria-label="CampusBet dashboard preview">
+          <div class="mini-app">
+            <div class="mini-nav">
+              <strong class="gradient-text">CampusBet Dashboard</strong>
+              <span class="pill">500 credits</span>
+            </div>
+            <div class="mini-stat-grid">
+              <div class="mini-stat"><span>Matches</span><strong>12</strong></div>
+              <div class="mini-stat"><span>Win rate</span><strong>67%</strong></div>
+              <div class="mini-stat"><span>Lobby bid</span><strong>80</strong></div>
+              <div class="mini-stat"><span>Rank</span><strong>#04</strong></div>
+            </div>
+            <div class="mini-lobby">
+              <div>
+                <span class="label">Open Lobby</span>
+                <h3>Valorant 1v1 - Neon Alley</h3>
+              </div>
+              <div class="progress"><span></span></div>
+              <div class="button-row">
+                <span class="pill">1 / 2 slots</span>
+                <span class="pill">Campus-only</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="slide" id="overview">
+        <div class="section-title">
+          <span class="eyebrow"><span class="live-dot"></span> Project overview</span>
+          <h2>What the prototype solves</h2>
+          <p class="lead">CampusBet turns informal campus game challenges into structured match rooms, tournaments, wallet activity, and rankings. It is designed as a classroom-friendly, frontend-first prototype.</p>
+        </div>
+        <div class="grid-3">
+          <article class="feature-tile">
+            <div class="tile-icon">01</div>
+            <h3>Campus-only community</h3>
+            <p>Signup is gated by institutional email patterns so the prototype is scoped to students from a college ecosystem.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">02</div>
+            <h3>Virtual credit economy</h3>
+            <p>Users stake campus credits for skill matches. Credits are a score unit only and are not withdrawable or exchangeable.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">03</div>
+            <h3>Competitive loop</h3>
+            <p>Create a lobby, join a match, submit results, update stats, and reflect performance across wallet, profile, and leaderboard views.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="architecture">
+        <div class="section-title">
+          <span class="eyebrow">Frontend-first architecture</span>
+          <h2>React pages talk to Zustand stores, stores talk to Supabase.</h2>
+          <p class="lead">The project intentionally avoids a custom Express backend. Supabase handles auth and database storage, while the React SPA owns page flow and UI state.</p>
+        </div>
+        <div class="architecture">
+          <div class="arch-box">
+            <span class="label">Presentation layer</span>
+            <h3>React Router pages</h3>
+            <p>Landing, dashboard, lobbies, tournaments, leaderboard, wallet, and profile screens.</p>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box">
+            <span class="label">State and actions</span>
+            <h3>Zustand stores</h3>
+            <p>Auth, lobby, and tournament stores centralize data fetching and mutations.</p>
+          </div>
+          <div class="arch-arrow">→</div>
+          <div class="arch-box">
+            <span class="label">Backend as a service</span>
+            <h3>Supabase</h3>
+            <p>PostgreSQL tables, auth sessions, relational selects, and profile data.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide" id="features">
+        <div class="section-title">
+          <span class="eyebrow">Feature map</span>
+          <h2>The prototype covers the full student competition journey.</h2>
+        </div>
+        <div class="grid-3">
+          <article class="feature-tile">
+            <div class="tile-icon">🎮</div>
+            <h3>Lobbies</h3>
+            <p>Create 1v1, 2v2, squad, or free-for-all match rooms with game, title, bid amount, schedule, and rules.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">🏆</div>
+            <h3>Tournaments</h3>
+            <p>Host or browse single-elimination style events with entry fee, prize pool, dates, participants, and rules.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">📊</div>
+            <h3>Leaderboard</h3>
+            <p>Ranks players using completed match data and filters rankings by all time, month, or week.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">💳</div>
+            <h3>Wallet</h3>
+            <p>Builds a transaction-style view from match outcomes so wins and losses are reflected as credit changes.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">👤</div>
+            <h3>Profile</h3>
+            <p>Shows identity, college, lifetime stats, and match history for the active student account.</p>
+          </article>
+          <article class="feature-tile">
+            <div class="tile-icon">🔐</div>
+            <h3>Authentication</h3>
+            <p>Uses Supabase auth plus a profile table, persisted in Zustand for refresh-friendly sessions.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="stack">
+        <div class="section-title">
+          <span class="eyebrow">Tech stack</span>
+          <h2>Modern frontend tools, minimal backend complexity.</h2>
+        </div>
+        <div class="grid-3">
+          <article class="stack-tile">
+            <span class="label">Frontend</span>
+            <h3>React 19 + Vite 8</h3>
+            <p>SPA routing, lazy-loaded protected pages, fast dev server, and optimized production builds.</p>
+            <div class="pill-list"><span class="pill">React Router</span><span class="pill">Vite</span><span class="pill">JSX</span></div>
+          </article>
+          <article class="stack-tile">
+            <span class="label">Styling</span>
+            <h3>Tailwind CSS</h3>
+            <p>Dark gaming UI with glass cards, purple/cyan accents, glow shadows, and responsive layouts.</p>
+            <div class="pill-list"><span class="pill">Space Grotesk</span><span class="pill">Inter</span><span class="pill">Framer Motion</span></div>
+          </article>
+          <article class="stack-tile">
+            <span class="label">State</span>
+            <h3>Zustand</h3>
+            <p>Small stores for auth, lobbies, and tournaments. The auth store persists current session state.</p>
+            <div class="pill-list"><span class="pill">authStore</span><span class="pill">lobbyStore</span><span class="pill">tournamentStore</span></div>
+          </article>
+          <article class="stack-tile">
+            <span class="label">Backend service</span>
+            <h3>Supabase</h3>
+            <p>Auth, Postgres tables, relational joins, profile creation, and app data storage without a custom API server.</p>
+            <div class="pill-list"><span class="pill">Auth</span><span class="pill">PostgreSQL</span><span class="pill">RLS-ready</span></div>
+          </article>
+          <article class="stack-tile">
+            <span class="label">Forms and UX</span>
+            <h3>React Hook Form</h3>
+            <p>Multi-step lobby and tournament creation flows with validation and clear user feedback.</p>
+            <div class="pill-list"><span class="pill">Validation</span><span class="pill">Toast feedback</span><span class="pill">Protected routes</span></div>
+          </article>
+          <article class="stack-tile">
+            <span class="label">Deployment</span>
+            <h3>Vercel + GitHub Pages</h3>
+            <p>The app is deployed as a Vite SPA on Vercel. This presentation is hosted as static GitHub Pages documentation.</p>
+            <div class="pill-list"><span class="pill">SPA rewrite</span><span class="pill">Static docs</span><span class="pill">README link</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="data-flow">
+        <div class="section-title">
+          <span class="eyebrow">Data model</span>
+          <h2>The schema mirrors the product workflow.</h2>
+          <p class="lead">The app uses a small relational model: users become profiles, profiles create lobbies and tournaments, join tables connect players to events, and completed matches power stats.</p>
+        </div>
+        <div class="schema">
+          <article class="table-card">
+            <h3>profiles</h3>
+            <p>Student identity, college, credits, role, and lifetime stats.</p>
+          </article>
+          <article class="table-card">
+            <h3>lobbies</h3>
+            <p>Game, host, bid amount, status, schedule, description, and winner.</p>
+          </article>
+          <article class="table-card">
+            <h3>lobby_players</h3>
+            <p>Join table that records which users entered each match room.</p>
+          </article>
+          <article class="table-card">
+            <h3>tournaments</h3>
+            <p>Hosted events with format, entry fee, prize pool, rules, and dates.</p>
+          </article>
+          <article class="table-card">
+            <h3>participants</h3>
+            <p>Join table between users and tournaments.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="demo-flow">
+        <div class="section-title">
+          <span class="eyebrow">Demo script</span>
+          <h2>A simple walkthrough for evaluators.</h2>
+        </div>
+        <div class="timeline">
+          <article class="timeline-item">
+            <div class="step-num">1</div>
+            <div><h3>Start from landing</h3><p>Explain that CampusBet is college-gated and uses campus credits only.</p></div>
+          </article>
+          <article class="timeline-item">
+            <div class="step-num">2</div>
+            <div><h3>Create or join a lobby</h3><p>Show game selection, bid amount, schedule, rules, and lobby status transitions.</p></div>
+          </article>
+          <article class="timeline-item">
+            <div class="step-num">3</div>
+            <div><h3>Open tournaments</h3><p>Show event hosting, participant registration, overview details, and bracket area.</p></div>
+          </article>
+          <article class="timeline-item">
+            <div class="step-num">4</div>
+            <div><h3>Close with wallet and leaderboard</h3><p>Show how completed matches become transactions and ranking signals.</p></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="contributions">
+        <div class="section-title">
+          <span class="eyebrow">Mock individual contribution split</span>
+          <h2>Replace names and percentages before final submission.</h2>
+          <p class="lead">This section is intentionally drafted as a placeholder contribution model for the prototype report.</p>
+        </div>
+        <div class="grid-2">
+          <article class="contribution">
+            <strong>Shaurya Pratap Singh</strong>
+            <h3>Project lead and product flow</h3>
+            <p>Defined core problem statement, campus-credit concept, feature scope, repo organization, and final demo narrative.</p>
+          </article>
+          <article class="contribution">
+            <strong>Contributor 2</strong>
+            <h3>Auth and Supabase integration</h3>
+            <p>Implemented Supabase client setup, profile mapping, persisted auth state, signup, login, and protected routes.</p>
+          </article>
+          <article class="contribution">
+            <strong>Contributor 3</strong>
+            <h3>Lobbies, wallet, and dashboard</h3>
+            <p>Built lobby CRUD flows, join flow, result submission, match history conversion, wallet cards, and dashboard widgets.</p>
+          </article>
+          <article class="contribution">
+            <strong>Contributor 4</strong>
+            <h3>Tournaments, leaderboard, and UI polish</h3>
+            <p>Built tournament creation and registration views, leaderboard ranking logic, responsive components, and presentation assets.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="future">
+        <div class="section-title">
+          <span class="eyebrow">Future scope</span>
+          <h2>From prototype to production-ready campus platform.</h2>
+        </div>
+        <div class="grid-3">
+          <article class="scope-card">
+            <h3>Real-time lobby updates</h3>
+            <p>Use Supabase realtime channels so lobby slots, statuses, and tournament registrations update live.</p>
+          </article>
+          <article class="scope-card">
+            <h3>Dispute and proof system</h3>
+            <p>Add screenshot proof upload, host moderation, dispute states, and admin review workflows.</p>
+          </article>
+          <article class="scope-card">
+            <h3>Campus administration</h3>
+            <p>Role-based dashboards for college admins to manage games, reports, users, and suspicious activity.</p>
+          </article>
+          <article class="scope-card">
+            <h3>Bracket automation</h3>
+            <p>Generate and advance brackets automatically after each tournament round.</p>
+          </article>
+          <article class="scope-card">
+            <h3>Notifications</h3>
+            <p>Email or in-app alerts for upcoming matches, result submissions, tournament starts, and leaderboard changes.</p>
+          </article>
+          <article class="scope-card">
+            <h3>Mobile-first PWA</h3>
+            <p>Installable app shell, offline-friendly views, push notifications, and improved touch interactions.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide" id="closing">
+        <div class="section-title">
+          <span class="eyebrow"><span class="live-dot"></span> Closing summary</span>
+          <h2>CampusBet proves the full loop: challenge, compete, score, rank.</h2>
+          <p class="lead">The prototype demonstrates a practical frontend-first architecture, a safe virtual-credit game economy, and a complete set of student-facing workflows suitable for a capstone demo.</p>
+        </div>
+        <div class="button-row">
+          <a class="button primary" href="#cover">Back to cover</a>
+          <a class="button" href="https://campusarena-nine.vercel.app">Open live app</a>
+          <a class="button" href="https://github.com/sps-exe/CampusArena">Open GitHub repo</a>
+        </div>
+        <p class="footer-note">Prepared as a static HTML presentation for GitHub Pages. Content is based on the current repository structure and can be edited directly in <code>docs/index.html</code>.</p>
+      </section>
+    </main>
+  </div>
+
+  <div class="deck-controls" aria-label="Slide controls">
+    <button type="button" id="prevSlide" aria-label="Previous slide">↑</button>
+    <button type="button" id="nextSlide" aria-label="Next slide">↓</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const currentSlideIndex = () => {
+      const y = window.scrollY + window.innerHeight * 0.38;
+      return Math.max(0, slides.findIndex((slide, index) => {
+        const next = slides[index + 1];
+        return y >= slide.offsetTop && (!next || y < next.offsetTop);
+      }));
+    };
+    const goToSlide = (offset) => {
+      const nextIndex = Math.min(slides.length - 1, Math.max(0, currentSlideIndex() + offset));
+      slides[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    document.getElementById('prevSlide').addEventListener('click', () => goToSlide(-1));
+    document.getElementById('nextSlide').addEventListener('click', () => goToSlide(1));
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') goToSlide(1);
+      if (event.key === 'ArrowUp' || event.key === 'PageUp') goToSlide(-1);
+    });
+  </script>
+</body>
+</html>
